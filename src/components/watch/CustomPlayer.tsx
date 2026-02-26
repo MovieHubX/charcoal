@@ -1,8 +1,22 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Hls from 'hls.js';
-import { Settings, Subtitles, Volume2, Loader2, AlertCircle, RefreshCcw } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  MediaPlayer,
+  MediaProvider,
+  Track,
+  isHLSProvider,
+  type MediaProviderAdapter,
+} from '@vidstack/react';
+import {
+  DefaultVideoLayout,
+  defaultLayoutIcons,
+} from '@vidstack/react/player/layouts/default';
+
+import '@vidstack/react/player/styles/default/theme.css';
+import '@vidstack/react/player/styles/default/layouts/video.css';
+
+import { Loader2, AlertCircle, RefreshCcw, Settings } from 'lucide-react';
 import { useJellySources } from '../../api/hooks/useJelly';
-import { JellySource, JellySubtitle, JellyAudioTrack } from '../../api/services/jelly';
+import { JellySource } from '../../api/services/jelly';
 import { cn } from '../../lib/utils';
 
 interface CustomPlayerProps {
@@ -13,6 +27,48 @@ interface CustomPlayerProps {
   episode?: number;  // for TV
   useJelly?: boolean; // whether to attempt Jelly direct streams
 }
+
+const formatQuality = (quality: string) => {
+  if (!quality) return 'Auto';
+  // Remove common "bullshit" or messy tags
+  return quality
+    .replace(/\s*[\[\(\{].*?[\]\)\}]\s*/g, ' ') // remove (...), [...], {...}
+    .replace(/\b(unknown|webrip|web-dl|bluray|x264|x265|hevc|10bit|dual-audio|multi|h264|h265)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim() || 'Auto';
+};
+
+const formatProvider = (name: string) => {
+  if (!name) return 'Premium';
+  // Clean provider names
+  return name
+    .replace(/\s*[\[\(\{].*?[\]\)\}]\s*/g, ' ')
+    .replace(/\b(server|provider|premium|unknown)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim() || 'Premium';
+};
+
+const formatSubtitleLabel = (label: string) => {
+  if (!label) return 'English';
+  // Clean subtitle labels from messy metadata
+  return label
+    .replace(/\s*[\[\(\{].*?[\]\)\}]\s*/g, ' ')
+    .replace(/\b(forced|sdh|cc|unknown)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim() || label;
+};
+
+const getQualityValue = (q: string) => {
+  const lower = q.toLowerCase();
+  if (lower.includes('2160') || lower.includes('4k')) return 2160;
+  if (lower.includes('1440') || lower.includes('2k')) return 1440;
+  if (lower.includes('1080')) return 1080;
+  if (lower.includes('720')) return 720;
+  if (lower.includes('480')) return 480;
+  if (lower.includes('360')) return 360;
+  const num = parseInt(q);
+  return isNaN(num) ? 0 : num;
+};
 
 const CustomPlayer: React.FC<CustomPlayerProps> = ({
   tmdbId,
@@ -30,155 +86,61 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
     enabled: useJelly
   });
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  
+  const player = useRef<any>(null);
   const [selectedSource, setSelectedSource] = useState<JellySource | null>(null);
-  const [selectedSubtitle, setSelectedSubtitle] = useState<JellySubtitle | null>(null);
-  const [selectedAudio, setSelectedAudio] = useState<JellyAudioTrack | null>(null);
-  const [showControls, setShowControls] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const [showSettings, setShowSettings] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<'none' | 'quality' | 'subtitle' | 'audio'>('none');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
 
-  // Load last selected quality from localStorage
-  useEffect(() => {
-    if (jellyData?.sources?.length) {
-      const cachedQuality = localStorage.getItem('player-quality');
-      const source = jellyData.sources.find(s => s.quality === cachedQuality) || jellyData.sources[0];
-      setSelectedSource(source);
-    }
+  // Clean and sort sources
+  const processedSources = useMemo(() => {
+    if (!jellyData?.sources) return [];
+    return [...jellyData.sources].map(s => ({
+      ...s,
+      cleanQuality: formatQuality(s.quality),
+      cleanProvider: formatProvider(s.provider.name)
+    })).sort((a, b) => {
+      // Sort by quality (4K > 1080p > 720p > etc)
+      const qA = getQualityValue(a.quality);
+      const qB = getQualityValue(b.quality);
+      return qB - qA;
+    });
   }, [jellyData]);
 
-  const initPlayer = useCallback(() => {
-    if (!videoRef.current || !selectedSource) return;
+  // Clean and memoize subtitles
+  const processedSubtitles = useMemo(() => {
+    if (!jellyData?.subtitles) return [];
+    return jellyData.subtitles.map(sub => ({
+      ...sub,
+      cleanLabel: formatSubtitleLabel(sub.label)
+    }));
+  }, [jellyData]);
 
-    const video = videoRef.current;
-    setError(null);
-
-    // Clean up previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-
-    if (selectedSource.type === 'hls') {
-      if (Hls.isSupported()) {
-        const hls = new Hls({
-          capLevelToPlayerSize: true,
-          autoStartLoad: true,
-        });
-        hls.loadSource(selectedSource.url);
-        hls.attachMedia(video);
-        hlsRef.current = hls;
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (selectedAudio) {
-            const tracks = hls.audioTracks;
-            const index = tracks.findIndex(t =>
-              t.name === selectedAudio.label || t.lang === selectedAudio.language
-            );
-            if (index !== -1) {
-              hls.audioTrack = index;
-            }
-          }
-        });
-
-        hls.on(Hls.Events.ERROR, (_, data) => {
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                hls.recoverMediaError();
-                break;
-              default:
-                setError('Playback failed. Please try another source or quality.');
-                hls.destroy();
-                break;
-            }
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = selectedSource.url;
-      } else {
-        setError('HLS playback is not supported in this browser.');
-      }
-    } else {
-      video.src = selectedSource.url;
-    }
-  }, [selectedSource]);
-
+  // Load last selected quality or default to 1080p
   useEffect(() => {
-    initPlayer();
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-      }
-    };
-  }, [initPlayer]);
+    if (processedSources.length) {
+      const cachedQuality = localStorage.getItem('player-quality');
+      let source = processedSources.find(s => s.cleanQuality === cachedQuality);
 
-  const handleQualityChange = (source: JellySource) => {
+      if (!source) {
+        // Default to 1080p if available
+        source = processedSources.find(s => s.cleanQuality.includes('1080')) || processedSources[0];
+      }
+
+      setSelectedSource(source);
+    }
+  }, [processedSources]);
+
+  const handleQualityChange = (source: any) => {
+    const currentTime = player.current?.currentTime;
+
     setSelectedSource(source);
-    localStorage.setItem('player-quality', source.quality);
-    setActiveMenu('none');
-  };
+    localStorage.setItem('player-quality', source.cleanQuality);
+    setShowQualityMenu(false);
 
-  const handleSubtitleChange = (sub: JellySubtitle | null) => {
-    setSelectedSubtitle(sub);
-    setActiveMenu('none');
-  };
-
-  const handleAudioChange = (audio: JellyAudioTrack) => {
-    setSelectedAudio(audio);
-    setActiveMenu('none');
-
-    if (hlsRef.current) {
-      const tracks = hlsRef.current.audioTracks;
-      const index = tracks.findIndex(t =>
-        t.name === audio.label || t.lang === audio.language
-      );
-      if (index !== -1) {
-        hlsRef.current.audioTrack = index;
-      }
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!videoRef.current) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (videoRef.current.paused) videoRef.current.play();
-        else videoRef.current.pause();
-      } else if (e.code === 'ArrowRight') {
-        videoRef.current.currentTime += 10;
-      } else if (e.code === 'ArrowLeft') {
-        videoRef.current.currentTime -= 10;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleVideoClick = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) videoRef.current.play();
-    else videoRef.current.pause();
-  };
-
-  const handleDoubleVideoClick = (e: React.MouseEvent) => {
-    if (!videoRef.current) return;
-    const rect = videoRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    if (x > rect.width / 2) {
-      videoRef.current.currentTime += 10;
-    } else {
-      videoRef.current.currentTime -= 10;
+    if (currentTime) {
+      setTimeout(() => {
+        if (player.current) player.current.currentTime = currentTime;
+      }, 100);
     }
   };
 
@@ -191,13 +153,13 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
   }
 
   // Fallback to embed if no sources or error
-  if ((!jellyData?.sources?.length && !isLoading) || isError || error) {
+  if ((!processedSources.length && !isLoading) || isError || localError) {
     if (embedUrl) {
       return (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-black">
           <iframe
             src={embedUrl}
-            className="w-full h-full"
+            className="w-full h-full border-none"
             allowFullScreen
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           />
@@ -209,10 +171,10 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h3 className="text-xl font-bold mb-2">Failed to load video</h3>
         <p className="text-white/60 mb-6 max-w-md">
-          {error || "We couldn't find any direct links for this content."}
+          {localError || "We couldn't find any direct links for this content."}
         </p>
         <button
-          onClick={() => { setError(null); refetch(); }}
+          onClick={() => { setLocalError(null); refetch(); }}
           className="flex items-center gap-2 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-medium"
         >
           <RefreshCcw className="w-4 h-4" />
@@ -223,158 +185,84 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
   }
 
   return (
-    <div 
-      className="absolute inset-0 bg-black group overflow-hidden"
-      onMouseMove={() => {
-        setShowControls(true);
-        // Hide controls after 3 seconds of inactivity
-        const timer = setTimeout(() => setShowControls(false), 3000);
-        return () => clearTimeout(timer);
-      }}
-    >
-      <video
-        ref={videoRef}
-        className="w-full h-full cursor-pointer"
-        playsInline
-        autoPlay
-        controls={showControls}
-        onClick={(e) => {
-          if (e.detail === 1) {
-            handleVideoClick();
-          } else if (e.detail === 2) {
-            handleDoubleVideoClick(e);
-          }
-        }}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onWaiting={() => setIsBuffering(true)}
-        onPlaying={() => setIsBuffering(false)}
-      >
-        {selectedSubtitle && (
-          <track
-            key={selectedSubtitle.url}
-            src={selectedSubtitle.url}
-            kind="subtitles"
-            label={selectedSubtitle.label}
-            srcLang="en"
-            default
-          />
-        )}
-      </video>
+    <div className="absolute inset-0 bg-black overflow-hidden group">
+      {selectedSource && (
+        <MediaPlayer
+          ref={player}
+          title={type === 'movie' ? 'Movie' : `S${season} E${episode}`}
+          src={selectedSource.url}
+          onProviderChange={onProviderChange}
+          onError={() => setLocalError('Playback failed. Please try another source.')}
+          className="w-full h-full"
+          playsInline
+          autoPlay
+          crossOrigin
+        >
+          <MediaProvider />
 
-      {isBuffering && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Loader2 className="w-10 h-10 text-white animate-spin" />
-        </div>
+          {processedSubtitles.map((sub) => (
+            <Track
+              key={sub.url}
+              src={sub.url}
+              kind="subtitles"
+              label={sub.cleanLabel}
+              lang="en"
+              type="vtt"
+            />
+          ))}
+
+          <DefaultVideoLayout
+            icons={defaultLayoutIcons}
+          />
+        </MediaPlayer>
       )}
 
-      {/* Custom Overlays for Quality/Subtitle/Audio Selection */}
-      <div className={cn(
-        "absolute top-4 right-4 flex flex-col gap-2 transition-opacity duration-300",
-        showControls ? "opacity-100" : "opacity-0"
-      )}>
-        <button
-          onClick={() => setActiveMenu(activeMenu === 'quality' ? 'none' : 'quality')}
-          className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm border border-white/10"
-          title="Quality"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-
-        {jellyData?.subtitles?.length > 0 && (
+      {/* Manual Quality Switcher overlay */}
+      {processedSources.length > 1 && (
+        <div className="absolute top-4 right-4 z-50">
           <button
-            onClick={() => setActiveMenu(activeMenu === 'subtitle' ? 'none' : 'subtitle')}
-            className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm border border-white/10"
-            title="Subtitles"
+            onClick={() => setShowQualityMenu(!showQualityMenu)}
+            className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Switch Quality"
           >
-            <Subtitles className="w-5 h-5" />
+            <Settings className="w-5 h-5" />
           </button>
-        )}
 
-        {selectedSource?.audioTracks?.length && selectedSource.audioTracks.length > 1 && (
-          <button
-            onClick={() => setActiveMenu(activeMenu === 'audio' ? 'none' : 'audio')}
-            className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm border border-white/10"
-            title="Audio Tracks"
-          >
-            <Volume2 className="w-5 h-5" />
-          </button>
-        )}
-      </div>
-
-      {/* Menus */}
-      {activeMenu !== 'none' && (
-        <>
-          <div
-            className="absolute inset-0 z-40"
-            onClick={() => setActiveMenu('none')}
-          />
-          <div className="absolute top-16 right-4 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl z-50">
-          <div className="p-3 border-b border-white/10">
-            <h4 className="text-xs font-bold text-white/40 uppercase tracking-wider">
-              {activeMenu === 'quality' ? 'Quality' : activeMenu === 'subtitle' ? 'Subtitles' : 'Audio Track'}
-            </h4>
-          </div>
-          <div className="max-h-64 overflow-y-auto">
-            {activeMenu === 'quality' && jellyData.sources.map((source) => (
-              <button
-                key={source.url}
-                onClick={() => handleQualityChange(source)}
-                className={cn(
-                  "w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                  selectedSource?.url === source.url ? "text-red-500 font-bold" : "text-white"
-                )}
-              >
-                <div className="flex flex-col">
-                  <span>{source.quality}</span>
-                  <span className="text-[10px] text-white/40 uppercase tracking-tight">
-                    {source.provider.name}
-                  </span>
+          {showQualityMenu && (
+            <>
+              <div 
+                className="fixed inset-0" 
+                onClick={() => setShowQualityMenu(false)}
+              />
+              <div className="absolute top-12 right-0 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-2xl z-[60]">
+                <div className="p-3 border-b border-white/10">
+                  <h4 className="text-xs font-bold text-white/40 uppercase tracking-wider">
+                    Quality
+                  </h4>
                 </div>
-              </button>
-            ))}
-
-            {activeMenu === 'subtitle' && (
-              <>
-                <button
-                  onClick={() => handleSubtitleChange(null)}
-                  className={cn(
-                    "w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                    !selectedSubtitle ? "text-red-500 font-bold" : "text-white"
-                  )}
-                >
-                  Off
-                </button>
-                {jellyData.subtitles.map((sub) => (
-                  <button
-                    key={sub.url}
-                    onClick={() => handleSubtitleChange(sub)}
-                    className={cn(
-                      "w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                      selectedSubtitle?.url === sub.url ? "text-red-500 font-bold" : "text-white"
-                    )}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </>
-            )}
-
-            {activeMenu === 'audio' && selectedSource?.audioTracks?.map((audio) => (
-              <button
-                key={audio.label}
-                onClick={() => handleAudioChange(audio)}
-                className={cn(
-                  "w-full px-4 py-2 text-left text-sm transition-colors hover:bg-white/10",
-                  selectedAudio?.label === audio.label ? "text-red-500 font-bold" : "text-white"
-                )}
-              >
-                {audio.label} ({audio.language})
-              </button>
-            ))}
-          </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {processedSources.map((source: any) => (
+                    <button
+                      key={source.url}
+                      onClick={() => handleQualityChange(source)}
+                      className={cn(
+                        "w-full px-4 py-3 text-left text-sm transition-colors hover:bg-white/10",
+                        selectedSource?.url === source.url ? "text-red-500 font-bold" : "text-white"
+                      )}
+                    >
+                      <div className="flex flex-col">
+                        <span>{source.cleanQuality}</span>
+                        <span className="text-[10px] text-white/40 uppercase tracking-tight">
+                          {source.cleanProvider}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        </>
       )}
     </div>
   );
