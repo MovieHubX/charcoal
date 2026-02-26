@@ -28,6 +28,23 @@ interface CustomPlayerProps {
   useJelly?: boolean; // whether to attempt Jelly direct streams
 }
 
+const formatQuality = (quality: string) => {
+  if (!quality) return 'Auto';
+  // Remove common "bullshit" or messy tags
+  return quality
+    .replace(/\s*\(.*?\)\s*/g, '') // remove (...)
+    .replace(/unknown/gi, '')
+    .trim() || 'Auto';
+};
+
+const formatProvider = (name: string) => {
+  if (!name) return 'Premium';
+  // Clean provider names
+  return name
+    .replace(/server/gi, '')
+    .trim() || 'Premium';
+};
+
 const CustomPlayer: React.FC<CustomPlayerProps> = ({
   tmdbId,
   type,
@@ -49,14 +66,35 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
   const [localError, setLocalError] = useState<string | null>(null);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
 
-  // Load last selected quality from localStorage
+  // Clean and sort sources
+  const processedSources = useMemo(() => {
+    if (!jellyData?.sources) return [];
+    return [...jellyData.sources].map(s => ({
+      ...s,
+      cleanQuality: formatQuality(s.quality),
+      cleanProvider: formatProvider(s.provider.name)
+    })).sort((a, b) => {
+      // Sort by quality (1080p > 720p > etc)
+      const qA = parseInt(a.cleanQuality) || 0;
+      const qB = parseInt(b.cleanQuality) || 0;
+      return qB - qA;
+    });
+  }, [jellyData]);
+
+  // Load last selected quality or default to 1080p
   useEffect(() => {
-    if (jellyData?.sources?.length) {
+    if (processedSources.length) {
       const cachedQuality = localStorage.getItem('player-quality');
-      const source = jellyData.sources.find(s => s.quality === cachedQuality) || jellyData.sources[0];
+      let source = processedSources.find(s => s.quality === cachedQuality || s.cleanQuality === cachedQuality);
+      
+      if (!source) {
+        // Default to 1080p if available
+        source = processedSources.find(s => s.cleanQuality.includes('1080')) || processedSources[0];
+      }
+      
       setSelectedSource(source);
     }
-  }, [jellyData]);
+  }, [processedSources]);
 
   const onProviderChange = (provider: MediaProviderAdapter | null) => {
     if (isHLSProvider(provider)) {
@@ -67,9 +105,9 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
     }
   };
 
-  const handleQualityChange = (source: JellySource) => {
+  const handleQualityChange = (source: any) => {
     setSelectedSource(source);
-    localStorage.setItem('player-quality', source.quality);
+    localStorage.setItem('player-quality', source.cleanQuality);
     setShowQualityMenu(false);
   };
 
@@ -82,7 +120,7 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
   }
 
   // Fallback to embed if no sources or error
-  if ((!jellyData?.sources?.length && !isLoading) || isError || localError) {
+  if ((!processedSources.length && !isLoading) || isError || localError) {
     if (embedUrl) {
       return (
         <div className="absolute inset-0 bg-black">
@@ -146,8 +184,8 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
         </MediaPlayer>
       )}
 
-      {/* Manual Quality Switcher as an overlay if multiple sources exist */}
-      {jellyData?.sources && jellyData.sources.length > 1 && (
+      {/* Manual Quality Switcher overlay */}
+      {processedSources.length > 1 && (
         <div className="absolute top-4 right-4 z-50">
           <button
             onClick={() => setShowQualityMenu(!showQualityMenu)}
@@ -170,7 +208,7 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
                   </h4>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {jellyData.sources.map((source) => (
+                  {processedSources.map((source: any) => (
                     <button
                       key={source.url}
                       onClick={() => handleQualityChange(source)}
@@ -180,9 +218,9 @@ const CustomPlayer: React.FC<CustomPlayerProps> = ({
                       )}
                     >
                       <div className="flex flex-col">
-                        <span>{source.quality}</span>
+                        <span>{source.cleanQuality}</span>
                         <span className="text-[10px] text-white/40 uppercase tracking-tight">
-                          {source.provider.name}
+                          {source.cleanProvider}
                         </span>
                       </div>
                     </button>
