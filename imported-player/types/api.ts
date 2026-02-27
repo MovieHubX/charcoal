@@ -2,9 +2,10 @@ export interface BackendSource {
   url: string;
   type: "mp4" | "hls" | "mkv";
   quality: string;
-  audioTracks?: any[];
-  language: string;
-  label: string;
+  audioTracks?: Array<{
+    language: string;
+    label: string;
+  }>;
   provider: {
     id: string;
     name: string;

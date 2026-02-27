@@ -1,10 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
+import HlsLib from 'hls.js';
 import { BackendApiResponse, BackendSource, BackendSubtitle } from '../types/api';
+
+const Hls = HlsLib;
 
 interface VideoPlayerProps {
   apiResponse: BackendApiResponse;
 }
+
+const formatQuality = (quality: string): string => {
+  if (!quality) return 'Auto';
+  const cleanQuality = quality.toLowerCase().replace(/[^0-9pk]/g, '');
+  if (cleanQuality.includes('2160') || cleanQuality.includes('4k')) return '4K';
+  if (cleanQuality.includes('1440') || cleanQuality.includes('2k')) return '2K';
+  if (cleanQuality.includes('1080')) return '1080p';
+  if (cleanQuality.includes('720')) return '720p';
+  if (cleanQuality.includes('480')) return '480p';
+  if (cleanQuality.includes('360')) return '360p';
+  return quality;
+};
 
 // million-ignore
 const SourceList = ({
@@ -24,12 +38,11 @@ const SourceList = ({
         className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm flex justify-between items-center transition-all border border-transparent ${currentSource === src ? 'bg-accent/10 border-accent/30 text-accent' : 'text-gray-300 hover:border-white/10'}`}
       >
         <div className="flex flex-col gap-0.5">
-          <span className="font-bold tracking-tight">{src.quality}p</span>
-          <span className="text-[10px] opacity-40 uppercase font-black tracking-widest">{src.type}</span>
+          <span className="font-bold tracking-tight">{formatQuality(src.quality)}</span>
+          <span className="text-[10px] opacity-40 uppercase font-black tracking-widest">{src.type.toUpperCase()}</span>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-[9px] bg-white/5 px-2 py-1 rounded-md text-white/50 uppercase font-black tracking-tighter border border-white/5">{src.provider.name}</span>
-          {src.language && <span className="text-[9px] opacity-30 uppercase font-bold">{src.language}</span>}
         </div>
       </button>
     ))}
@@ -309,7 +322,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
             {/* Quality Selector */}
             <div className="relative group/quality">
               <button className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all flex items-center gap-3 active:scale-95">
-                <span>{currentSource?.quality}p</span>
+                <span>{currentSource && formatQuality(currentSource.quality)}</span>
                 <svg className="w-3.5 h-3.5 opacity-40 transition-transform group-hover/quality:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div className="absolute bottom-full right-0 mb-4 w-72 bg-gray-900/95 border border-white/10 rounded-2xl hidden group-hover/quality:block p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2">
