@@ -7,7 +7,7 @@ import { useStore } from '../store/useStore';
 import { useQueries } from '@tanstack/react-query';
 import { mediaService } from '../api/services/media';
 import { cn } from '../lib/utils';
-import CustomPlayer from '../components/watch/CustomPlayer';
+import VideoPlayer from '../components/watch/VideoPlayer';
 import BottomBar from '../components/watch/BottomBar';
 
 const WatchPage: React.FC = () => {
@@ -65,20 +65,13 @@ const WatchPage: React.FC = () => {
     onUpdateWatchlist: updateWatchlistStatus,
   });
 
-  // If source is Jelly, use Jelly player; otherwise use iframe embed
-  const isJelly = selectedSource === 'jelly';
+  const videoUrl = mediaType === 'movie'
+    ? getMovieUrl(selectedSource, Number(id))
+    : getTvUrl(selectedSource, Number(id), Number(season), Number(episode));
 
-  // For non-Jelly sources, get the embed URL
-  const embedUrl = !isJelly ? (
-    mediaType === 'movie'
-      ? getMovieUrl(selectedSource, Number(id))
-      : getTvUrl(selectedSource, Number(id), Number(season), Number(episode))
-  ) : (
-    // Fallback to VIDEASY for Jelly if it fails
-    mediaType === 'movie'
-      ? getMovieUrl('videasy.net', Number(id))
-      : getTvUrl('videasy.net', Number(id), Number(season), Number(episode))
-  );
+  if (!videoUrl) {
+    return <div>Invalid media type or missing parameters</div>;
+  }
 
   const backUrl = mediaType === 'movie' ? `/movie/${id}` : `/tv/${id}`;
 
@@ -119,14 +112,7 @@ const WatchPage: React.FC = () => {
       isLandscape && "flex-col-reverse"
     )}>
       <div className="relative flex-1">
-        <CustomPlayer
-          tmdbId={id!}
-          type={mediaType as 'movie' | 'tv'}
-          embedUrl={embedUrl}
-          season={Number(season)}
-          episode={Number(episode)}
-          useJelly={isJelly}
-        />
+        <VideoPlayer videoUrl={videoUrl} />
       </div>
       <BottomBar
         onBack={() => navigate(backUrl)}
