@@ -203,7 +203,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-40 transition-opacity duration-200",
+          "fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-200",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -212,24 +212,25 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       {/* Modal */}
       <div
         className={cn(
-          "z-50 bg-light-bg dark:bg-dark-bg shadow-xl border-2 border-gray-400/50 dark:border-white/20 flex flex-col transition-all duration-300",
+          "z-50 bg-black/90 shadow-2xl border border-white/10 flex flex-col transition-all duration-300 backdrop-blur-lg",
           getLayoutClasses(),
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
         )}
         style={getModalStyle()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-400/50 dark:border-white/20 flex items-center justify-between">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <List className="w-5 h-5" />
-            <h2 className="text-lg font-semibold">Select Episode</h2>
-            {!hideTitle && title && <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">• {title}</span>}
+            <List className="w-5 h-5 text-accent" />
+            <h2 className="text-lg font-bold text-white">Episodes</h2>
+            {!hideTitle && title && <span className="text-sm text-white/60">• {title}</span>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-light-surface/80 dark:bg-dark-surface hover:bg-light-surface dark:hover:bg-dark-surface/80 rounded-md border border-gray-400/50 dark:border-white/20 transition-all"
+            className="p-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all active:scale-95"
+            title="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
@@ -237,14 +238,14 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         {showResumeButton && currentProgress?.season && currentProgress?.episode && (
           <button
             onClick={handleResumeClick}
-            className="mx-4 mt-4 mb-2 px-4 py-3 bg-red-600 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors relative"
+            className="mx-4 mt-4 mb-2 px-4 py-3 bg-accent/20 hover:bg-accent/30 text-accent border border-accent/50 hover:border-accent rounded-lg flex items-center justify-center gap-2 transition-all relative font-medium backdrop-blur-sm"
           >
             <StepForward className="w-5 h-5" />
             Resume S{currentProgress.season}:E{currentProgress.episode}
             {currentProgress.progress && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 rounded-b-lg overflow-hidden">
                 <div
-                  className="h-full bg-white/30"
+                  className="h-full bg-accent"
                   style={{
                     width: `${(currentProgress.progress.watched / currentProgress.progress.duration) * 100}%`
                   }}
@@ -255,35 +256,34 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         )}
 
         {/* Season Selector */}
-        <div className="px-4 py-3 border-b border-gray-400/50 dark:border-white/20">
+        <div className="px-4 py-3 border-b border-white/10">
           <div className="relative">
             <select
               value={selectedSeason}
               onChange={(e) => handleSeasonChange(Number(e.target.value))}
-              className="w-full px-4 py-2.5 bg-light-surface/80 dark:bg-dark-surface hover:bg-light-surface dark:hover:bg-dark-surface/80 hover:border-red-600 dark:hover:border-red-500 border border-gray-400/50 dark:border-white/20 rounded-md text-light-text-primary dark:text-dark-text-primary appearance-none focus:outline-none transition-all pr-10"
+              className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-accent/50 rounded-lg text-white appearance-none focus:outline-none focus:border-accent transition-all pr-10 font-medium backdrop-blur-sm"
             >
               {seasons.map((season) => (
                 <option
                   key={season.season_number}
                   value={season.season_number}
-                  className="bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary"
+                  className="bg-black text-white"
                 >
                   {season.name}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-white/60" />
           </div>
         </div>
 
         {/* Episodes List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="space-y-0">
+        <div className="flex-1 overflow-y-auto scrollbar-thin p-2">
+          <div className="space-y-2">
             {sortedEpisodes.map((episode, index) => {
               const duration = formatDuration(episode.runtime);
               const progress = getEpisodeProgress(selectedSeason, episode.episode_number);
-              const isLast = index === (sortedEpisodes.length || 0) - 1;
-              const isCurrent = (currentSeason && currentEpisode) 
+              const isCurrent = (currentSeason && currentEpisode)
                 ? (selectedSeason === Number(currentSeason) && episode.episode_number === Number(currentEpisode))
                 : (resumeInfo?.season === selectedSeason && resumeInfo?.episode === episode.episode_number);
 
@@ -292,14 +292,13 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   key={episode.episode_number}
                   onClick={() => handleEpisodeSelect(selectedSeason, episode.episode_number)}
                   className={cn(
-                    "w-full px-4 py-4 hover:bg-light-surface dark:hover:bg-dark-surface/80 flex gap-4 group relative",
-                    isCurrent && "bg-red-600/10 dark:bg-red-500/10 after:content-[''] after:absolute after:left-0 after:top-0 after:h-full after:w-1 after:bg-red-600 dark:after:bg-red-500",
-                    !isLast && "border-b border-gray-400/50 dark:border-white/20",
+                    "w-full px-3 py-3 hover:bg-white/10 flex gap-3 group relative rounded-lg transition-all border",
+                    isCurrent ? "bg-accent/20 border-accent/50" : "bg-white/5 border-white/10 hover:border-white/20",
                     progress?.isCompleted && "opacity-60"
                   )}
                 >
                   {/* Episode Thumbnail */}
-                  <div className="w-28 aspect-video bg-light-surface dark:bg-dark-surface flex-shrink-0 rounded-md border border-gray-400/50 dark:border-white/20 overflow-hidden relative">
+                  <div className="w-28 aspect-video bg-white/10 flex-shrink-0 rounded-md border border-white/10 overflow-hidden relative">
                     {episode.still_path ? (
                       <img
                         src={getImageUrl(episode.still_path, 'w300')}
@@ -307,16 +306,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-light-surface dark:bg-dark-surface" />
+                      <div className="w-full h-full bg-white/5" />
                     )}
                     {duration && (
-                      <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-red-600 dark:bg-red-500 rounded-md border border-gray-400/50 dark:border-white/20 text-xs text-white">
+                      <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 text-white rounded text-xs font-medium border border-white/20">
                         {duration}
                       </span>
                     )}
                     {/* Play Button Overlay */}
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-md flex items-center justify-center transition-colors shadow-lg border border-white/20">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                      <div className="w-8 h-8 bg-accent hover:bg-accent/90 rounded flex items-center justify-center transition-all shadow-lg border border-accent/50">
                         {progress?.isCompleted ? (
                           <Check className="w-4 h-4 text-white scale-100 group-hover:scale-110 transition-transform" />
                         ) : (isCurrent || progress?.isWatching) ? (
@@ -332,31 +331,31 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
-                        "font-medium truncate max-w-[200px] text-light-text-primary dark:text-dark-text-primary",
-                        isCurrent && "text-red-600 dark:text-red-500"
+                        "font-semibold text-sm",
+                        isCurrent ? "text-accent" : "text-white"
                       )}>
-                        {episode.episode_number}. {episode.name}
+                        {index + 1}. {episode.name}
                       </span>
                     </div>
-                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary line-clamp-2 mb-0.5">
-                      {episode.overview}
+                    <p className="text-xs text-white/60 line-clamp-2 mb-1">
+                      {episode.overview || 'No description available'}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-light-text-secondary/60 dark:text-dark-text-secondary/60">
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-white/40">
                         {formatAirDate(episode.air_date)}
                       </span>
                       {progress?.remainingTime && (
-                        <span className="text-xs text-light-text-secondary/60 dark:text-dark-text-secondary/60">
+                        <span className="text-xs text-white/40">
                           {progress.remainingTime} left
                         </span>
                       )}
                     </div>
                     {/* Progress Bar */}
                     {progress && (
-                      <div className="mt-1">
-                        <div className="h-1 bg-light-surface dark:bg-dark-surface rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-red-600 dark:bg-red-500 transition-all duration-300"
+                      <div className="mt-1.5">
+                        <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-accent transition-all duration-300"
                             style={{ width: `${Math.min(progress.progress, 100)}%` }}
                           />
                         </div>

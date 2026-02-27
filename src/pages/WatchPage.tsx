@@ -104,6 +104,10 @@ const WatchPage: React.FC = () => {
 
   const backUrl = mediaType === 'movie' ? `/movie/${id}` : `/tv/${id}`;
 
+  const handleBack = () => {
+    navigate(backUrl);
+  };
+
   const handlePrevious = () => {
     if (mediaType === 'tv' && episode && season) {
       if (Number(episode) > 1) {
@@ -150,6 +154,7 @@ const WatchPage: React.FC = () => {
             videoUrl={videoUrl}
             jellyData={jellyData}
             useCustomPlayer={useCustomPlayer}
+<<<<<<< Updated upstream
           />
         )}
       </div>
@@ -177,6 +182,49 @@ const WatchPage: React.FC = () => {
         onTogglePlayer={() => setUseCustomPlayer(!useCustomPlayer)}
         hasCustomPlayer={!!jellyData}
       />
+=======
+            isMovie={mediaType === 'movie'}
+            seasonNumber={Number(season)}
+            episodeNumber={Number(episode)}
+            episodeTitle={currentEpisodeData?.name}
+            showTitle={mediaType === 'movie' ? details?.title : details?.name}
+            seasons={seasons}
+            onEpisodeNext={handleNext}
+            onEpisodePrevious={handlePrevious}
+            onEpisodeSelect={handleEpisodeSelect}
+            isFirstEpisode={isFirstEpisode}
+            isLastEpisode={isLastEpisode}
+            onBack={handleBack}
+          />
+        )}
+      </div>
+      {(!useCustomPlayer || !jellyData) && (
+        <BottomBar
+          onBack={() => navigate(backUrl)}
+          backUrl={backUrl}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onSourceChange={setSelectedSource}
+          selectedSource={selectedSource}
+          showTitle={mediaType === 'movie' ? details?.title : details?.name}
+          episodeTitle={currentEpisodeData?.name}
+          seasons={seasons}
+          currentSeason={season}
+          currentEpisode={episode}
+          selectedSeason={selectedSeason}
+          onSeasonChange={setSelectedSeason}
+          onEpisodeSelect={handleEpisodeSelect}
+          isFirstEpisode={isFirstEpisode}
+          isLastEpisode={isLastEpisode}
+          tvId={Number(id)}
+          isMovie={mediaType === 'movie'}
+          isLandscape={isLandscape}
+          useCustomPlayer={useCustomPlayer}
+          onTogglePlayer={() => setUseCustomPlayer(!useCustomPlayer)}
+          hasCustomPlayer={!!jellyData}
+        />
+      )}
+>>>>>>> Stashed changes
     </div>
   );
 };

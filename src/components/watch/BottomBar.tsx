@@ -60,23 +60,23 @@ const BottomBar: React.FC<BottomBarProps> = ({
 
   return (
     <div className={cn(
-      "relative flex items-center justify-between gap-2 p-2 bg-black/90 backdrop-blur-sm border-t border-white/20",
+      "relative flex items-center justify-between gap-2 p-2 md:p-3 bg-black/95 backdrop-blur-lg border-t border-white/10",
       isLandscape && "border-b border-t-0"
     )}>
       <button
         onClick={onBack}
-        className="h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 flex-shrink-0"
+        className="h-10 px-3 md:px-4 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/10 hover:border-white/20 flex-shrink-0 active:scale-95"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="font-medium text-sm hidden md:inline">Back</span>
       </button>
 
-      <div className="relative flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/20 flex-1 max-w-[calc(100%-160px)] md:max-w-[500px]">
+      <div className="relative flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/10 flex-1 max-w-[calc(100%-160px)] md:max-w-[500px]">
         {!isMovie && (
           <button
             onClick={onPrevious}
             disabled={isFirstEpisode}
-            className="h-8 px-2 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            className="h-8 px-2 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/10 hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 active:scale-95"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -84,14 +84,14 @@ const BottomBar: React.FC<BottomBarProps> = ({
         <button
           ref={episodeButtonRef}
           onClick={() => setIsEpisodeMenuOpen(!isEpisodeMenuOpen)}
-          className="h-8 px-3 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/20 hover:border-red-500 flex-1 min-w-0 overflow-hidden"
+          className="h-8 px-3 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/10 hover:border-accent flex-1 min-w-0 overflow-hidden active:scale-95"
         >
           <div className="flex items-center justify-center gap-2 text-sm font-medium w-full min-w-0">
             <span className="truncate text-center">{showTitle}</span>
             {!isMovie && currentSeason && currentEpisode && (
               <span className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-white/60">•</span>
-                <span>
+                <span className="text-white/50">•</span>
+                <span className="text-accent">
                   S{currentSeason.padStart(2, '0')}E{currentEpisode.padStart(2, '0')}
                 </span>
               </span>
@@ -102,7 +102,7 @@ const BottomBar: React.FC<BottomBarProps> = ({
           <button
             onClick={onNext}
             disabled={isLastEpisode}
-            className="h-8 px-2 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            className="h-8 px-2 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center justify-center transition-all duration-200 border border-white/10 hover:border-accent disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 active:scale-95"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -133,14 +133,23 @@ const BottomBar: React.FC<BottomBarProps> = ({
           <button
             onClick={onTogglePlayer}
             className={cn(
+<<<<<<< Updated upstream
               "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 hover:border-accent flex-shrink-0",
               useCustomPlayer && "bg-accent/20 border-accent text-accent"
+=======
+              "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/10 hover:border-accent flex-shrink-0 active:scale-95",
+              useCustomPlayer && "bg-accent/20 border-accent/50 text-accent hover:bg-accent/30"
+>>>>>>> Stashed changes
             )}
             title={useCustomPlayer ? "Switch to Embed Player" : "Switch to Custom Player"}
           >
             <MonitorPlay className="w-4 h-4" />
             <span className="font-medium text-sm hidden lg:inline">
+<<<<<<< Updated upstream
               {useCustomPlayer ? "Use Embed" : "Use Custom"}
+=======
+              {useCustomPlayer ? "Embed" : "Custom"}
+>>>>>>> Stashed changes
             </span>
           </button>
         )}
@@ -150,8 +159,13 @@ const BottomBar: React.FC<BottomBarProps> = ({
             ref={sourcesButtonRef}
             onClick={() => setIsSourcesMenuOpen(!isSourcesMenuOpen)}
             className={cn(
+<<<<<<< Updated upstream
               "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 hover:border-red-500 flex-shrink-0",
               !useCustomPlayer && "bg-red-500/20 border-red-500 text-red-500"
+=======
+              "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/15 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/10 hover:border-accent flex-shrink-0 active:scale-95",
+              !useCustomPlayer && "bg-accent/20 border-accent/50 text-accent hover:bg-accent/30"
+>>>>>>> Stashed changes
             )}
           >
             <Server className="w-4 h-4" />
