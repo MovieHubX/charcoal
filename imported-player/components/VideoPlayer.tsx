@@ -19,19 +19,16 @@ interface VideoPlayerProps {
   isFirstEpisode?: boolean;
   isLastEpisode?: boolean;
   onBack?: () => void;
+  onTogglePlayer?: () => void;
 }
 
 const formatQuality = (quality: string): string => {
   if (!quality) return 'Auto';
   const lower = quality.toLowerCase();
 
-  // Handle "unknown" or empty
   if (lower === 'unknown' || lower === '') return 'SD';
-
-  // Handle "up to HD" type strings
   if (lower.includes('up to hd') || (lower.includes('hd') && !lower.match(/\d/))) return 'HD';
 
-  // Extract numbers
   const cleanQuality = lower.replace(/[^0-9]/g, '');
 
   if (cleanQuality.includes('2160') || lower.includes('4k')) return '4K';
@@ -41,13 +38,11 @@ const formatQuality = (quality: string): string => {
   if (cleanQuality.includes('480')) return '480p';
   if (cleanQuality.includes('360')) return '360p';
 
-  // If we have a number, append 'p'
   if (cleanQuality) return `${cleanQuality}p`;
 
   return 'SD';
 };
 
-// million-ignore
 const SourceList = ({
   sources,
   currentSource,
@@ -57,26 +52,23 @@ const SourceList = ({
   currentSource: BackendSource | null,
   onSelect: (src: BackendSource) => void
 }) => (
-  <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+  <div className="space-y-1 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
     {sources.map((src, i) => (
       <button
         key={i}
         onClick={() => onSelect(src)}
-        className={`w-full text-left px-3.5 py-2.5 rounded-lg hover:bg-white/5 text-sm flex justify-between items-center transition-all border ${currentSource === src ? 'bg-accent/10 border-accent/50 text-accent' : 'border-white/5 text-gray-300 hover:border-white/10'}`}
+        className={`w-full text-left px-3 py-2 rounded-md hover:bg-white/10 text-sm flex justify-between items-center transition-all ${currentSource === src ? 'bg-accent/20 text-accent' : 'text-gray-200'}`}
       >
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold tracking-tight">{formatQuality(src.quality)}</span>
-          <span className="text-[10px] opacity-40 uppercase font-medium tracking-wide">{src.type.toUpperCase()}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">{formatQuality(src.quality)}</span>
+          <span className="text-[10px] text-white/40 uppercase">{src.type}</span>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-[9px] bg-white/5 px-2 py-0.5 rounded text-white/50 uppercase font-medium tracking-tight border border-white/5">{src.provider.name}</span>
-        </div>
+        <span className="text-[10px] text-white/30">{src.provider.name}</span>
       </button>
     ))}
   </div>
 );
 
-// million-ignore
 const SubtitleList = ({
   subtitles,
   currentSubtitle,
@@ -86,26 +78,25 @@ const SubtitleList = ({
   currentSubtitle: BackendSubtitle | null,
   onSelect: (sub: BackendSubtitle | null) => void
 }) => (
-  <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+  <div className="space-y-1 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
     <button
       onClick={() => onSelect(null)}
-      className={`w-full text-left px-3.5 py-2.5 rounded-lg hover:bg-white/5 text-sm transition-all border ${currentSubtitle === null ? 'bg-accent/10 border-accent/50 text-accent font-semibold' : 'border-white/5 text-gray-300 hover:border-white/10'}`}
+      className={`w-full text-left px-3 py-2 rounded-md hover:bg-white/10 text-sm transition-all ${currentSubtitle === null ? 'bg-accent/20 text-accent font-semibold' : 'text-gray-200'}`}
     >
-      None (Off)
+      Off
     </button>
     {subtitles.map((sub, i) => (
       <button
         key={i}
         onClick={() => onSelect(sub)}
-        className={`w-full text-left px-3.5 py-2.5 rounded-lg hover:bg-white/5 text-sm transition-all border ${currentSubtitle === sub ? 'bg-accent/10 border-accent/50 text-accent font-semibold' : 'border-white/5 text-gray-300 hover:border-white/10'}`}
+        className={`w-full text-left px-3 py-2 rounded-md hover:bg-white/10 text-sm transition-all ${currentSubtitle === sub ? 'bg-accent/20 text-accent font-semibold' : 'text-gray-200'}`}
       >
-        <span>{sub.label}</span>
+        {sub.label}
       </button>
     ))}
   </div>
 );
 
-// million-ignore
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   apiResponse,
   isMovie,
@@ -117,10 +108,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onEpisodeSelect,
   isFirstEpisode,
   isLastEpisode,
-  onBack
+  onBack,
+  onTogglePlayer
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [currentSource, setCurrentSource] = useState<BackendSource | null>(apiResponse.sources[0] || null);
   const [currentSubtitle, setCurrentSubtitle] = useState<BackendSubtitle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -146,13 +139,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setIsLoading(true);
     setProgress(0);
 
-    // Cleanup existing HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
 
-    // Reset video element
     video.src = '';
 
     if (currentSource.type === 'hls') {
@@ -227,12 +218,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    if (videoRef.current && duration && !isNaN(duration)) {
-      const time = (Number(e.target.value) / 100) * duration;
-      videoRef.current.currentTime = Math.max(0, Math.min(time, duration));
-    }
+  const handleProgressBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !videoRef.current || !duration) return;
+
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(clickX / rect.width, 1));
+    const newTime = percentage * duration;
+
+    videoRef.current.currentTime = newTime;
+    setProgress(percentage * 100);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -317,14 +312,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         )}
       </video>
 
-      {/* Loading Spinner */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
           <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
         </div>
       )}
 
-      {/* Title and Back Button Overlay */}
       {showControls && (
         <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex items-center justify-between z-30 bg-gradient-to-b from-black/80 to-transparent pointer-events-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-3">
@@ -350,19 +343,29 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </div>
             )}
           </div>
+          {onTogglePlayer && (
+            <button
+              onClick={onTogglePlayer}
+              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg border border-white/10 hover:border-accent/50 transition-all text-sm font-medium flex items-center gap-2"
+              title="Switch to Embed Player"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+              <span className="hidden sm:inline">Embed Player</span>
+            </button>
+          )}
         </div>
       )}
 
-      {/* Episode Selector Overlay - Redesigned for Landscape */}
       {!isMovie && showEpisodeSelector && seasons && (
-        <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-8" onClick={(e) => e.stopPropagation()}>
-          <div className="w-full max-w-7xl max-h-[90vh] bg-black/95 border border-white/10 rounded-xl overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/10">
-              <h2 className="text-white font-bold text-xl md:text-2xl">Select Episode</h2>
+        <div className="absolute inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-4xl max-h-[85vh] bg-black/95 border border-white/10 rounded-xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h2 className="text-white font-bold text-lg">Select Episode</h2>
               <button
                 onClick={() => setShowEpisodeSelector(false)}
-                className="p-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/10 hover:border-white/20 transition-all"
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all"
                 title="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,16 +374,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </button>
             </div>
 
-            {/* Season Tabs */}
-            <div className="flex gap-2 p-4 md:px-6 overflow-x-auto border-b border-white/10 custom-scrollbar">
+            <div className="flex gap-2 p-3 overflow-x-auto border-b border-white/10 custom-scrollbar">
               {seasons.map((season) => (
                 <button
                   key={season.season_number}
                   onClick={() => setSelectedSeason(season.season_number)}
-                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all flex-shrink-0 border ${
+                  className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all text-sm ${
                     selectedSeason === season.season_number
-                      ? 'bg-accent/20 border-accent/50 text-accent'
-                      : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20'
+                      ? 'bg-accent/20 text-accent'
+                      : 'bg-white/5 text-white hover:bg-white/10'
                   }`}
                 >
                   Season {season.season_number}
@@ -388,9 +390,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               ))}
             </div>
 
-            {/* Episodes Grid - Landscape Optimized */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {seasons
                   .find((s) => s.season_number === selectedSeason)
                   ?.episodes.map((episode: any) => (
@@ -400,14 +401,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                         onEpisodeSelect?.(selectedSeason, episode.episode_number);
                         setShowEpisodeSelector(false);
                       }}
-                      className={`flex flex-col gap-2 p-3 rounded-lg transition-all border text-left group hover:scale-[1.02] ${
+                      className={`flex flex-col gap-2 p-2 rounded-lg transition-all text-left hover:scale-[1.02] ${
                         episodeNumber === episode.episode_number && seasonNumber === selectedSeason
-                          ? 'bg-accent/20 border-accent/50'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          ? 'bg-accent/20 border border-accent/50'
+                          : 'bg-white/5 border border-white/10 hover:bg-white/10'
                       }`}
                     >
-                      {/* Thumbnail */}
-                      <div className="w-full aspect-video bg-white/10 rounded-md border border-white/10 overflow-hidden relative">
+                      <div className="w-full aspect-video bg-white/10 rounded-md overflow-hidden relative">
                         {episode.still_path ? (
                           <img
                             src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
@@ -416,41 +416,26 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                           />
                         ) : (
                           <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                            <svg className="w-8 h-8 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                           </div>
                         )}
                         {episode.runtime && (
-                          <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 text-white rounded text-xs font-medium border border-white/20">
+                          <span className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 text-white rounded text-[10px] font-medium">
                             {episode.runtime}m
                           </span>
                         )}
                       </div>
 
-                      {/* Episode Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start gap-2 mb-1">
-                          <span className={`font-semibold text-sm leading-tight ${
-                            episodeNumber === episode.episode_number && seasonNumber === selectedSeason
-                              ? 'text-accent'
-                              : 'text-white'
-                          }`}>
-                            {episode.episode_number}. {episode.name}
-                          </span>
-                        </div>
-                        <p className="text-xs text-white/60 line-clamp-2 leading-relaxed">
-                          {episode.overview || 'No description available'}
-                        </p>
-                        {episode.air_date && (
-                          <span className="text-xs text-white/40 mt-1.5 block">
-                            {new Date(episode.air_date).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        )}
+                        <span className={`font-semibold text-xs leading-tight line-clamp-2 ${
+                          episodeNumber === episode.episode_number && seasonNumber === selectedSeason
+                            ? 'text-accent'
+                            : 'text-white'
+                        }`}>
+                          {episode.episode_number}. {episode.name}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -460,34 +445,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         </div>
       )}
 
-      {/* Controls Overlay */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 flex flex-col justify-end p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent ${showControls ? 'opacity-100' : 'opacity-0'}`}
       >
-
-        {/* Progress Bar */}
-        <div className="w-full mb-2 relative group/progress pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+        <div
+          ref={progressBarRef}
+          className="w-full mb-2 relative pointer-events-auto cursor-pointer"
+          onClick={handleProgressBarClick}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="relative h-1.5 bg-white/20 rounded-full overflow-hidden hover:h-2 transition-all">
             <div
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-accent to-accent/80 rounded-full transition-all"
+              className="absolute top-0 left-0 h-full bg-accent rounded-full"
               style={{ width: `${progress}%` }}
-            ></div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.01"
-              value={progress || 0}
-              onChange={handleSeek}
-              onClick={(e) => e.stopPropagation()}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title="Seek"
             />
           </div>
-          <div className="absolute -top-1 left-0 w-1 h-4 bg-white rounded-full shadow-lg transition-all transform -translate-x-1/2 group-hover/progress:scale-125" style={{ left: `${progress}%` }}></div>
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg transition-all transform -translate-x-1/2 hover:scale-125"
+            style={{ left: `${progress}%` }}
+          />
         </div>
 
-        {/* Duration Labels */}
         <div className="flex items-center justify-between text-xs text-white/70 mb-4 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
           <span className="tabular-nums">{formatTime(videoRef.current?.currentTime || 0)}</span>
           <span className="tabular-nums">{formatTime(duration)}</span>
@@ -549,16 +527,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             </div>
           </div>
 
-          {/* Unified Controls Container */}
           <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm">
-            {/* Episodes Button (TV Shows Only) */}
             {!isMovie && seasons && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowEpisodeSelector(!showEpisodeSelector);
                 }}
-                className="px-3 md:px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent/20 border border-transparent hover:border-accent/50 rounded-lg transition-all flex items-center gap-2 active:scale-95"
+                className="px-3 md:px-4 py-2 text-xs font-semibold hover:bg-accent/20 hover:text-accent rounded-lg transition-all flex items-center gap-2 active:scale-95"
                 title="Episodes"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -568,7 +544,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </button>
             )}
 
-            {/* Quality Selector */}
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -576,14 +551,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   setShowQuality(!showQuality);
                   setShowSubtitles(false);
                 }}
-                className="px-3 md:px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent/20 border border-transparent hover:border-accent/50 rounded-lg transition-all flex items-center gap-2 active:scale-95"
+                className="px-3 md:px-4 py-2 text-xs font-semibold hover:bg-accent/20 hover:text-accent rounded-lg transition-all flex items-center gap-2 active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span className="hidden sm:inline">{currentSource && formatQuality(currentSource.quality)}</span>
               </button>
               {showQuality && (
-                <div className="absolute bottom-full right-0 mb-3 w-72 bg-black/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-md">
-                  <div className="text-[10px] font-black text-white/50 mb-3 px-2 uppercase tracking-wider">Quality</div>
+                <div className="absolute bottom-full right-0 mb-2 w-64 bg-black/95 border border-white/10 rounded-lg p-3 shadow-2xl backdrop-blur-md">
+                  <div className="text-xs font-semibold text-white/60 mb-2 px-1">Quality</div>
                   <SourceList
                     sources={apiResponse.sources}
                     currentSource={currentSource}
@@ -596,7 +571,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               )}
             </div>
 
-            {/* Subtitles Selector */}
             <div className="relative">
               <button
                 onClick={(e) => {
@@ -604,14 +578,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
                   setShowSubtitles(!showSubtitles);
                   setShowQuality(false);
                 }}
-                className="px-3 md:px-4 py-2 text-xs font-bold uppercase tracking-wider hover:bg-accent/20 border border-transparent hover:border-accent/50 rounded-lg transition-all flex items-center gap-2 active:scale-95"
+                className="px-3 md:px-4 py-2 text-xs font-semibold hover:bg-accent/20 hover:text-accent rounded-lg transition-all flex items-center gap-2 active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="12" rx="2" strokeWidth="2"/><path d="M6 15h4M14 15h4M6 12h2M16 12h2" strokeWidth="2" strokeLinecap="round"/></svg>
                 <span className="hidden sm:inline">CC</span>
               </button>
               {showSubtitles && (
-                <div className="absolute bottom-full right-0 mb-3 w-60 bg-black/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-md">
-                  <div className="text-[10px] font-black text-white/50 mb-3 px-2 uppercase tracking-wider">Captions</div>
+                <div className="absolute bottom-full right-0 mb-2 w-56 bg-black/95 border border-white/10 rounded-lg p-3 shadow-2xl backdrop-blur-md">
+                  <div className="text-xs font-semibold text-white/60 mb-2 px-1">Subtitles</div>
                   <SubtitleList
                     subtitles={apiResponse.subtitles}
                     currentSubtitle={currentSubtitle}
@@ -624,8 +598,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               )}
             </div>
 
-            {/* Fullscreen Toggle */}
-            <button onClick={(e) => toggleFullscreen(e)} className="hover:bg-accent/20 hover:border-accent/50 transition-all active:scale-95 p-2 border border-transparent rounded-lg" title="Fullscreen">
+            <button onClick={(e) => toggleFullscreen(e)} className="hover:bg-accent/20 hover:text-accent transition-all active:scale-95 p-2 rounded-lg" title="Fullscreen">
               <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
               </svg>
@@ -643,11 +616,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.2);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.25);
+          background: rgba(255, 255, 255, 0.3);
         }
       `}</style>
     </div>

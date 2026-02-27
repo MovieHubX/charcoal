@@ -166,6 +166,7 @@ const WatchPage: React.FC = () => {
             isFirstEpisode={isFirstEpisode}
             isLastEpisode={isLastEpisode}
             onBack={handleBack}
+            onTogglePlayer={() => setUseCustomPlayer(!useCustomPlayer)}
           />
         )}
       </div>

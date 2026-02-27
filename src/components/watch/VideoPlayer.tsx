@@ -19,6 +19,7 @@ interface VideoPlayerProps {
   isFirstEpisode?: boolean;
   isLastEpisode?: boolean;
   onBack?: () => void;
+  onTogglePlayer?: () => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -37,6 +38,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   isFirstEpisode,
   isLastEpisode,
   onBack,
+  onTogglePlayer,
 }) => {
   const [showEpisodeSelector, setShowEpisodeSelector] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(seasonNumber || 1);
@@ -60,6 +62,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           isFirstEpisode={isFirstEpisode}
           isLastEpisode={isLastEpisode}
           onBack={onBack}
+          onTogglePlayer={onTogglePlayer}
         />
       </div>
     );
