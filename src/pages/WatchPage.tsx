@@ -9,6 +9,8 @@ import { mediaService } from '../api/services/media';
 import { cn } from '../lib/utils';
 import VideoPlayer from '../components/watch/VideoPlayer';
 import BottomBar from '../components/watch/BottomBar';
+import { fetchMovieData, fetchTVData } from '../lib/jelly';
+import { BackendApiResponse } from '../../imported-player/types/api';
 
 const WatchPage: React.FC = () => {
   const { mediaType, id } = useParams();
@@ -19,8 +21,35 @@ const WatchPage: React.FC = () => {
   const [selectedSource, setSelectedSource] = useState(SOURCES[0].id);
   const [selectedSeason, setSelectedSeason] = useState(Number(season) || 1);
   const [isLandscape, setIsLandscape] = useState(false);
+  const [jellyData, setJellyData] = useState<BackendApiResponse | null>(null);
+  const [useCustomPlayer, setUseCustomPlayer] = useState(true);
+  const [isJellyLoading, setIsJellyLoading] = useState(false);
 
   const { addToWatchHistory, updateWatchlistStatus } = useStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      setIsJellyLoading(true);
+      let data: BackendApiResponse | null = null;
+      if (mediaType === 'movie') {
+        data = await fetchMovieData(Number(id));
+      } else if (mediaType === 'tv' && season && episode) {
+        data = await fetchTVData(Number(id), Number(season), Number(episode));
+      }
+      setJellyData(data);
+      // If Jelly API fails, we could automatically fallback, but the user wants a manual button.
+      // However, if we don't have data, we must fallback.
+      if (!data) {
+        setUseCustomPlayer(false);
+      } else {
+        setUseCustomPlayer(true);
+      }
+      setIsJellyLoading(false);
+    };
+
+    fetchData();
+  }, [mediaType, id, season, episode]);
 
   useEffect(() => {
     const checkOrientation = () => {
@@ -112,7 +141,17 @@ const WatchPage: React.FC = () => {
       isLandscape && "flex-col-reverse"
     )}>
       <div className="relative flex-1">
-        <VideoPlayer videoUrl={videoUrl} />
+        {isJellyLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <VideoPlayer
+            videoUrl={videoUrl}
+            jellyData={jellyData}
+            useCustomPlayer={useCustomPlayer}
+          />
+        )}
       </div>
       <BottomBar
         onBack={() => navigate(backUrl)}
@@ -134,6 +173,9 @@ const WatchPage: React.FC = () => {
         tvId={Number(id)}
         isMovie={mediaType === 'movie'}
         isLandscape={isLandscape}
+        useCustomPlayer={useCustomPlayer}
+        onTogglePlayer={() => setUseCustomPlayer(!useCustomPlayer)}
+        hasCustomPlayer={!!jellyData}
       />
     </div>
   );

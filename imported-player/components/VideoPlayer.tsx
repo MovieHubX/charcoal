@@ -21,7 +21,7 @@ const SourceList = ({
       <button
         key={i}
         onClick={() => onSelect(src)}
-        className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm flex justify-between items-center transition-all border border-transparent ${currentSource === src ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'text-gray-300 hover:border-white/10'}`}
+        className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm flex justify-between items-center transition-all border border-transparent ${currentSource === src ? 'bg-accent/10 border-accent/30 text-accent' : 'text-gray-300 hover:border-white/10'}`}
       >
         <div className="flex flex-col gap-0.5">
           <span className="font-bold tracking-tight">{src.quality}p</span>
@@ -49,7 +49,7 @@ const SubtitleList = ({
   <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
     <button
       onClick={() => onSelect(null)}
-      className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm transition-all border border-transparent ${currentSubtitle === null ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'text-gray-300 hover:border-white/10'}`}
+      className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm transition-all border border-transparent ${currentSubtitle === null ? 'bg-accent/10 border-accent/30 text-accent' : 'text-gray-300 hover:border-white/10'}`}
     >
       None (Off)
     </button>
@@ -57,7 +57,7 @@ const SubtitleList = ({
       <button
         key={i}
         onClick={() => onSelect(sub)}
-        className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm transition-all border border-transparent ${currentSubtitle === sub ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'text-gray-300 hover:border-white/10'}`}
+        className={`w-full text-left px-3.5 py-3 rounded-xl hover:bg-white/5 text-sm transition-all border border-transparent ${currentSubtitle === sub ? 'bg-accent/10 border-accent/30 text-accent' : 'text-gray-300 hover:border-white/10'}`}
       >
         <span className="font-bold">{sub.label}</span>
         {sub.format && <span className="ml-2 text-[9px] opacity-30 uppercase">{sub.format}</span>}
@@ -231,7 +231,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
       {/* Loading Spinner */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-          <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
         </div>
       )}
 
@@ -250,27 +250,27 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
             step="0.1"
             value={progress || 0}
             onChange={handleSeek}
-            className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-blue-500 group-hover/progress:h-2 transition-all"
+            className="w-full h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-accent group-hover/progress:h-2 transition-all"
           />
           <div
-            className="absolute top-0 left-0 h-1.5 bg-blue-500 rounded-full pointer-events-none group-hover/progress:h-2 transition-all"
+            className="absolute top-0 left-0 h-1.5 bg-accent rounded-full pointer-events-none group-hover/progress:h-2 transition-all"
             style={{ width: `${progress}%` }}
           ></div>
         </div>
 
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
-            <button onClick={(e) => skip(-10, e)} className="hover:text-blue-400 transition-colors p-1">
+            <button onClick={(e) => skip(-10, e)} className="hover:text-accent transition-colors p-1">
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
             </button>
-            <button onClick={togglePlay} className="hover:text-blue-400 transition-all active:scale-90">
+            <button onClick={togglePlay} className="hover:text-accent transition-all active:scale-90">
               {isPlaying ? (
                 <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
               ) : (
                 <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               )}
             </button>
-            <button onClick={(e) => skip(10, e)} className="hover:text-blue-400 transition-colors p-1">
+            <button onClick={(e) => skip(10, e)} className="hover:text-accent transition-colors p-1">
               <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 8c2.65 0 5.05 1 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.16-3.16-1.88-5.12-1.88-3.54 0-6.55 2.31-7.6 5.5l-2.37-.78C2.92 11.03 6.85 8 11.5 8z"/></svg>
             </button>
 
@@ -281,7 +281,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
                   setVolume(volume === 0 ? 1 : 0);
                   if (videoRef.current) videoRef.current.volume = volume === 0 ? 1 : 0;
                 }}
-                className="hover:text-blue-400 transition-colors"
+                className="hover:text-accent transition-colors"
               >
                 {volume === 0 ? (
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
@@ -296,7 +296,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
                 step="0.1"
                 value={volume}
                 onChange={handleVolumeChange}
-                className="w-0 group-hover/volume:w-24 transition-all duration-300 h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-blue-500"
+                className="w-0 group-hover/volume:w-24 transition-all duration-300 h-1.5 bg-white/20 rounded-full appearance-none cursor-pointer accent-accent"
               />
             </div>
 
@@ -339,7 +339,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ apiResponse }) => {
             </div>
 
             {/* Fullscreen Toggle */}
-            <button onClick={(e) => toggleFullscreen(e)} className="hover:text-blue-400 transition-all active:scale-90 p-1.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10">
+            <button onClick={(e) => toggleFullscreen(e)} className="hover:text-accent transition-all active:scale-90 p-1.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
               </svg>

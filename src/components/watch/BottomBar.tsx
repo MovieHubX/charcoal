@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Server } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Server, MonitorPlay } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import EpisodeSelector from '../shared/EpisodeSelector';
 import SourcesMenu from './SourcesMenu';
@@ -24,6 +24,9 @@ interface BottomBarProps {
   tvId: number;
   isMovie?: boolean;
   isLandscape?: boolean;
+  useCustomPlayer?: boolean;
+  onTogglePlayer?: () => void;
+  hasCustomPlayer?: boolean;
 }
 
 const BottomBar: React.FC<BottomBarProps> = ({
@@ -46,6 +49,9 @@ const BottomBar: React.FC<BottomBarProps> = ({
   tvId,
   isMovie,
   isLandscape,
+  useCustomPlayer,
+  onTogglePlayer,
+  hasCustomPlayer,
 }) => {
   const [isEpisodeMenuOpen, setIsEpisodeMenuOpen] = React.useState(false);
   const [isSourcesMenuOpen, setIsSourcesMenuOpen] = React.useState(false);
@@ -122,26 +128,48 @@ const BottomBar: React.FC<BottomBarProps> = ({
         )}
       </div>
 
-      <div className="relative">
-        <button
-          ref={sourcesButtonRef}
-          onClick={() => setIsSourcesMenuOpen(!isSourcesMenuOpen)}
-          className="h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 hover:border-red-500 flex-shrink-0"
-        >
-          <Server className="w-4 h-4" />
-          <span className="font-medium text-sm hidden md:inline">Source</span>
-        </button>
+      <div className="flex items-center gap-2">
+        {hasCustomPlayer && (
+          <button
+            onClick={onTogglePlayer}
+            className={cn(
+              "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 hover:border-accent flex-shrink-0",
+              useCustomPlayer && "bg-accent/20 border-accent text-accent"
+            )}
+            title={useCustomPlayer ? "Switch to Embed Player" : "Switch to Custom Player"}
+          >
+            <MonitorPlay className="w-4 h-4" />
+            <span className="font-medium text-sm hidden lg:inline">
+              {useCustomPlayer ? "Use Embed" : "Use Custom"}
+            </span>
+          </button>
+        )}
 
-        <SourcesMenu
-          isOpen={isSourcesMenuOpen}
-          onClose={() => setIsSourcesMenuOpen(false)}
-          selectedSource={selectedSource}
-          onSourceSelect={(source) => {
-            onSourceChange(source);
-            setIsSourcesMenuOpen(false);
-          }}
-          isLandscape={isLandscape}
-        />
+        <div className="relative">
+          <button
+            ref={sourcesButtonRef}
+            onClick={() => setIsSourcesMenuOpen(!isSourcesMenuOpen)}
+            className={cn(
+              "h-10 px-3 md:px-4 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-1.5 transition-all duration-200 border border-white/20 hover:border-red-500 flex-shrink-0",
+              !useCustomPlayer && "bg-red-500/20 border-red-500 text-red-500"
+            )}
+          >
+            <Server className="w-4 h-4" />
+            <span className="font-medium text-sm hidden md:inline">Source</span>
+          </button>
+
+          <SourcesMenu
+            isOpen={isSourcesMenuOpen}
+            onClose={() => setIsSourcesMenuOpen(false)}
+            selectedSource={selectedSource}
+            onSourceSelect={(source) => {
+              onSourceChange(source);
+              if (useCustomPlayer && onTogglePlayer) onTogglePlayer();
+              setIsSourcesMenuOpen(false);
+            }}
+            isLandscape={isLandscape}
+          />
+        </div>
       </div>
     </div>
   );
