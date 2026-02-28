@@ -22,10 +22,10 @@ interface SimilarContentProps {
   mediaType: 'movie' | 'tv';
 }
 
-const SimilarContent: React.FC<SimilarContentProps> = ({ 
-  items, 
+const SimilarContent: React.FC<SimilarContentProps> = ({
+  items,
   title = 'Similar Titles',
-  mediaType 
+  mediaType
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -40,8 +40,8 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
       
       setShowLeftArrow(containerRef.current.scrollLeft > 0);
       setShowRightArrow(
-        containerRef.current.scrollLeft < 
-        containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
+        containerRef.current.scrollLeft <
+          containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
       );
     };
 
@@ -62,8 +62,8 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
     if (!containerRef.current) return;
     
     const scrollAmount = containerRef.current.clientWidth * 0.8;
-    const newScrollLeft = direction === 'left' 
-      ? containerRef.current.scrollLeft - scrollAmount 
+    const newScrollLeft = direction === 'left'
+      ? containerRef.current.scrollLeft - scrollAmount
       : containerRef.current.scrollLeft + scrollAmount;
     
     containerRef.current.scrollTo({
@@ -112,7 +112,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
 
   return (
     <div className="relative group/container">
-      {/* Navigation Arrows with glassy style */}
+      {/* Navigation Arrows */}
       <AnimatePresence>
         {showLeftArrow && (
           <motion.button
@@ -140,7 +140,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
           </motion.button>
         )}
       </AnimatePresence>
-      
+
       {/* Scrollable Container */}
       <div
         ref={containerRef}
@@ -170,7 +170,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
                   "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10"
                 )}
               >
-                {/* Poster Card */}
+                {/* Poster Card with title overlay */}
                 <Link
                   to={getMediaUrl(item)}
                   className="relative w-full aspect-[2/3] rounded-xl overflow-hidden flex-shrink-0 shadow-lg cursor-pointer"
@@ -179,7 +179,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
                     <img
                       src={getImageUrl(item.poster_path, 'w342')}
                       alt={itemTitle}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
                     <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/10">
@@ -187,13 +187,20 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
                     </div>
                   )}
 
-                  {/* Overlay - darker on hover like episode selector */}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors duration-300" />
+                  {/* Gradient overlay at bottom for title readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Title - bottom left on poster */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md line-clamp-2">
+                      {itemTitle}
+                    </h3>
+                  </div>
 
                   {/* Year Badge - Top Left */}
                   {year && (
-                    <div className="absolute top-2 left-2">
-                      <div className="px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                    <div className="absolute top-2 left-2 z-10">
+                      <div className="px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 shadow-sm">
                         {year}
                       </div>
                     </div>
@@ -201,24 +208,14 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
 
                   {/* Rating Badge - Top Right */}
                   {item.vote_average > 0 && (
-                    <div className="absolute top-2 right-2">
-                      <div className="flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg border border-white/10">
+                    <div className="absolute top-2 right-2 z-10">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg border border-white/10 shadow-sm">
                         <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                         <span className="text-[10px] font-bold">{item.vote_average.toFixed(1)}</span>
                       </div>
                     </div>
                   )}
                 </Link>
-
-                {/* Info Area */}
-                <div className="px-2 pb-2 flex flex-col gap-1.5 min-h-0">
-                  <Link
-                    to={getMediaUrl(item)}
-                    className="font-bold text-sm leading-tight text-white line-clamp-2 hover:text-accent transition-colors"
-                  >
-                    {itemTitle}
-                  </Link>
-                </div>
               </motion.div>
             );
           })}
