@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Play, ChevronLeft, ChevronRight, Video as VideoIcon, PlayCircle, ExternalLink, Youtube } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -87,12 +87,14 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
     return null;
   }
 
-  // Sort videos to prioritize trailers
-  const sortedVideos = [...videos].sort((a, b) => {
-    if (a.type === 'Trailer' && b.type !== 'Trailer') return -1;
-    if (a.type !== 'Trailer' && b.type === 'Trailer') return 1;
-    return 0;
-  });
+  // Sort videos to prioritize trailers and limit to 5
+  const sortedVideos = [...videos]
+    .sort((a, b) => {
+      if (a.type === 'Trailer' && b.type !== 'Trailer') return -1;
+      if (a.type !== 'Trailer' && b.type === 'Trailer') return 1;
+      return 0;
+    })
+    .slice(0, 5);
 
   return (
     <div className="relative group/container">
@@ -147,7 +149,7 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
               rel="noopener noreferrer"
               className={cn(
                 "group flex-shrink-0 w-[300px] flex flex-col gap-3 p-3 rounded-2xl transition-all text-left border relative overflow-hidden",
-                "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10 active:scale-95"
+                "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10"
               )}
               onClick={(e) => {
                 if (isDragging) {
@@ -155,25 +157,25 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
                 }
               }}
             >
-              {/* Thumbnail Area - from EpisodeSelector Grid */}
-              <div className="w-full aspect-video bg-white/5 rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg group-hover:scale-[1.02] transition-transform duration-500">
+              {/* Thumbnail Area */}
+              <div className="w-full aspect-video bg-white/5 rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg">
                 <img
                   src={`https://img.youtube.com/vi/${video.key}/maxresdefault.jpg`}
                   alt={video.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to lower quality if maxres doesn't exist
                     (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.key}/mqdefault.jpg`;
                   }}
                 />
-                
-                {/* Overlay with Better Icons */}
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-500" />
-                
-                {/* Play Icon - from EpisodeSelector style */}
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
+
+                {/* Play Icon */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center shadow-2xl border border-white/20 transform scale-75 group-hover:scale-100 transition-transform duration-500">
-                    <Youtube className="w-6 h-6 text-white fill-current" />
+                  <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20">
+                    <Play className="w-8 h-8 text-white fill-current ml-1" />
                   </div>
                 </div>
 
@@ -196,16 +198,9 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
 
               {/* Info Area */}
               <div className="px-1 flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  {video.type === 'Trailer' ? (
-                    <PlayCircle className="w-4 h-4 text-accent" />
-                  ) : (
-                    <VideoIcon className="w-4 h-4 text-white/40" />
-                  )}
-                  <h4 className="font-bold text-sm leading-tight text-white line-clamp-1 group-hover:text-accent transition-colors">
-                    {video.name}
-                  </h4>
-                </div>
+                <h4 className="font-bold text-sm leading-tight text-white line-clamp-2">
+                  {video.name}
+                </h4>
                 <div className="flex items-center justify-between text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">
                   <span>{video.site}</span>
                   {video.official && (
@@ -217,6 +212,32 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
           ))}
         </div>
       </div>
+
+      <style>{`
+        .scrollbar-none::-webkit-scrollbar {
+          width: 5px;
+          height: 5px;
+        }
+        .scrollbar-none::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+        }
+        .scrollbar-none::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 10px;
+        }
+        .scrollbar-none::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.5);
+        }
+        .dark .scrollbar-none::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .dark .scrollbar-none::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        .dark .scrollbar-none::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Tv, Star, Clock, Play, Bookmark, StepForward, ChevronDown, ChevronUp, Calendar, Info, Layers } from 'lucide-react';
+import { Film, Tv, Star, Clock, Play, Bookmark, StepForward, ChevronDown, ChevronUp, Calendar, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../../api/config';
 import { cn } from '../../lib/utils';
@@ -98,7 +98,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
         <img
           src={getImageUrl(backdropPath, 'original')}
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover/banner:scale-105"
+          className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
@@ -108,36 +108,17 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
       <div className="relative z-10 p-6 md:p-10 lg:p-14">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center lg:items-end">
           {/* Poster Section */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-48 md:w-64 lg:w-72 flex-shrink-0 relative group/poster"
+            className="w-48 md:w-64 lg:w-72 flex-shrink-0 relative"
           >
-            <div className="absolute -inset-1 bg-gradient-to-b from-accent/50 to-purple-500/50 rounded-2xl blur opacity-20 group-hover/poster:opacity-40 transition duration-500" />
+            <div className="absolute -inset-1 bg-gradient-to-b from-accent/50 to-purple-500/50 rounded-2xl blur opacity-20" />
             <img
               src={getImageUrl(posterPath, 'w500')}
               alt={title}
-              className="relative w-full rounded-2xl border border-white/10 shadow-2xl transition-transform duration-500 group-hover/poster:scale-[1.02]"
+              className="relative w-full rounded-2xl border border-white/10 shadow-2xl"
             />
-            
-            {/* Play Button Overlay on Poster (Mobile/Desktop hover) */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/poster:opacity-100 transition-opacity duration-300">
-              {type === 'movie' ? (
-                <Link
-                  to={getWatchUrl()}
-                  className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border border-white/20 transform scale-75 group-hover/poster:scale-100 transition-transform duration-500"
-                >
-                  <Play className="w-8 h-8 text-white fill-current ml-1" />
-                </Link>
-              ) : (
-                <button
-                  onClick={onPlayClick}
-                  className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border border-white/20 transform scale-75 group-hover/poster:scale-100 transition-transform duration-500"
-                >
-                  <Play className="w-8 h-8 text-white fill-current ml-1" />
-                </button>
-              )}
-            </div>
           </motion.div>
 
           {/* Content Section */}
@@ -148,15 +129,10 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
               transition={{ delay: 0.1 }}
             >
               <div className="flex justify-center lg:justify-start items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-accent/20 backdrop-blur-md text-accent border border-accent/30 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-md text-white/90 border border-white/20 rounded-full text-xs font-medium uppercase tracking-widest flex items-center gap-2">
                   {type === 'movie' ? <Film className="w-3.5 h-3.5" /> : <Tv className="w-3.5 h-3.5" />}
                   {type === 'movie' ? 'Movie' : 'TV Series'}
                 </span>
-                {contentRating && (
-                  <span className="px-3 py-1 bg-white/5 backdrop-blur-md text-white/80 border border-white/10 rounded-full text-xs font-bold uppercase tracking-widest">
-                    {contentRating}
-                  </span>
-                )}
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-white tracking-tight leading-none">
@@ -325,11 +301,6 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                     position="top-left"
                   />
                 </div>
-                
-                {/* Additional Info Button */}
-                <button className="hidden sm:flex w-14 h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl items-center justify-center transition-all active:scale-95 text-white/60 hover:text-white">
-                  <Info className="w-6 h-6" />
-                </button>
               </div>
             </motion.div>
           </div>
