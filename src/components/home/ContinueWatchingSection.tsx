@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Film, Tv, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { PlayCircle, Film, Tv, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { mediaService } from '../../api/services/media';
 import { getImageUrl } from '../../api/config';
@@ -16,9 +15,6 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
   const containerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const episodeQueries = useQuery({
     queryKey: ['episodes', items.map(item => `${item.id}-${item.season}-${item.episode}`)],
@@ -83,199 +79,132 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
     return `S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}`;
   };
 
-  const startDrag = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (containerRef.current?.offsetLeft || 0));
-    setScrollLeft(containerRef.current?.scrollLeft || 0);
-  };
-
-  const stopDrag = () => {
-    setIsDragging(false);
-  };
-
-  const onDrag = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
-    e.preventDefault();
-    
-    const x = e.pageX - (containerRef.current.offsetLeft || 0);
-    const walk = (x - startX) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
   if (items.length === 0) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="relative"
-    >
-      <div className="bg-light-surface/30 dark:bg-dark-surface/30 backdrop-blur-xl border border-border-light/30 dark:border-border-dark/30 rounded-[2.5rem] overflow-hidden shadow-2xl">
-        {/* Header */}
-        <div className="px-4 md:px-8 py-6 border-b border-border-light/30 dark:border-border-dark/30 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tight">
-              Continue Watching
-            </h2>
-            <p className="text-light-text-secondary dark:text-dark-text-secondary text-sm mt-1">
-              Pick up where you left off
-            </p>
-          </div>
-
-          {/* Navigation Buttons */}
-          <AnimatePresence>
-            {canScrollLeft && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => scroll('left')}
-                className="hidden lg:flex absolute -left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-light-surface/80 dark:bg-dark-surface/80 hover:bg-accent/80 text-light-text-primary dark:text-dark-text-primary hover:text-white border border-border-light dark:border-border-dark hover:border-accent rounded-full items-center justify-center transition-all backdrop-blur-md z-20 shadow-xl"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </motion.button>
+    <div className="h-full flex flex-col bg-light-bg dark:bg-dark-bg border-2 border-gray-400/50 dark:border-white/20 rounded-2xl overflow-hidden">
+      <div className="p-3 border-b border-border-light dark:border-border-dark flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Continue Watching</h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => scroll('left')}
+            className={cn(
+              "w-8 h-8 flex items-center justify-center hover:bg-light-surface dark:hover:bg-dark-surface rounded-full transition-colors border border-border-light dark:border-border-dark",
+              !canScrollLeft && "opacity-50 cursor-not-allowed"
             )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {canScrollRight && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => scroll('right')}
-                className="hidden lg:flex absolute -right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-light-surface/80 dark:bg-dark-surface/80 hover:bg-accent/80 text-light-text-primary dark:text-dark-text-primary hover:text-white border border-border-light dark:border-border-dark hover:border-accent rounded-full items-center justify-center transition-all backdrop-blur-md z-20 shadow-xl"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Cards Container */}
-        <div className="p-4 md:p-8">
-          <div
-            ref={containerRef}
-            className="overflow-x-auto scrollbar-none"
-            onMouseDown={startDrag}
-            onMouseUp={stopDrag}
-            onMouseLeave={stopDrag}
-            onMouseMove={onDrag}
-            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            disabled={!canScrollLeft}
           >
-            <div className="flex gap-4 md:gap-6">
-              {items.map((item, index) => {
-                const episodeDetails = item.mediaType === 'tv' ? episodeQueries.data?.[index] : null;
-                const progress = item.progress
-                  ? Math.round((item.progress.watched / item.progress.duration) * 100)
-                  : 0;
-                const remaining = item.progress
-                  ? item.progress.duration - item.progress.watched
-                  : 0;
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            className={cn(
+              "w-8 h-8 flex items-center justify-center hover:bg-light-surface dark:hover:bg-dark-surface rounded-full transition-colors border border-border-light dark:border-border-dark",
+              !canScrollRight && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={!canScrollRight}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
-                return (
-                  <motion.div
-                    key={`${item.mediaType}-${item.id}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex-shrink-0 w-[85vw] sm:w-[400px] lg:w-[450px]"
-                  >
-                    <Link
-                      to={`/watch/${item.mediaType}/${item.id}${
-                        item.mediaType === 'tv' ? `?season=${item.season}&episode=${item.episode}` : ''
-                      }`}
-                      className="group relative block h-full"
-                      onClick={(e) => {
-                        if (isDragging) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <div className="relative rounded-2xl overflow-hidden border border-border-light/50 dark:border-border-dark/50 bg-light-surface dark:bg-dark-surface group-hover:border-accent/50 transition-all duration-300 h-full">
-                        {/* Thumbnail */}
-                        <div className="aspect-video relative overflow-hidden bg-light-surface dark:bg-dark-surface">
-                          <img
-                            src={getImageUrl(
-                              item.mediaType === 'tv' && episodeDetails?.still_path
-                                ? episodeDetails.still_path
-                                : item.posterPath,
-                              'w780'
-                            )}
-                            alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-light-text-primary/60 via-transparent to-transparent dark:from-dark-text-primary/60" />
+      <div className="flex-1 p-3">
+        <div 
+          ref={containerRef}
+          className="overflow-x-auto scrollbar-thin"
+          style={{ scrollPaddingRight: '1rem' }}
+        >
+          <div className="flex gap-3">
+            {items.map((item, index) => {
+              const episodeDetails = item.mediaType === 'tv' ? episodeQueries.data?.[index] : null;
+              const progress = item.progress
+                ? Math.round((item.progress.watched / item.progress.duration) * 100)
+                : 0;
+              const remaining = item.progress
+                ? item.progress.duration - item.progress.watched
+                : 0;
 
-                          {/* Play Overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="w-14 h-14 bg-accent rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20">
-                              <Play className="w-7 h-7 text-white fill-current ml-1" />
-                            </div>
-                          </div>
+              return (
+                <Link
+                  key={`${item.mediaType}-${item.id}`}
+                  to={`/watch/${item.mediaType}/${item.id}${
+                    item.mediaType === 'tv' ? `?season=${item.season}&episode=${item.episode}` : ''
+                  }`}
+                  className="flex-shrink-0 w-[75vw] sm:w-[400px] lg:w-[450px] relative"
+                >
+                  <div className="relative border border-border-light dark:border-border-dark rounded-lg overflow-hidden hover:border-red-500/50 transition-all duration-200 group">
+                    <div className="aspect-video relative">
+                      <img
+                        src={getImageUrl(
+                          item.mediaType === 'tv' && episodeDetails?.still_path
+                            ? episodeDetails.still_path
+                            : item.posterPath,
+                          'w780'
+                        )}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
-                          {/* Media Type Badge */}
-                          <div className="absolute top-3 left-3">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-light-surface/80 dark:bg-dark-surface/80 backdrop-blur-md border border-border-light/50 dark:border-border-dark/50 rounded-lg text-[10px] md:text-xs font-bold text-light-text-primary dark:text-dark-text-primary">
-                              {item.mediaType === 'movie' ? <Film className="w-3 h-3" /> : <Tv className="w-3 h-3" />}
-                              {item.mediaType === 'movie' ? 'MOVIE' : 'TV'}
-                            </span>
-                          </div>
+                      <div className="absolute inset-0 p-3 flex flex-col justify-end">
+                        <div className="flex items-center gap-2 mb-1">
+                          {item.mediaType === 'movie' ? (
+                            <Film className="w-3.5 h-3.5 text-white" />
+                          ) : (
+                            <Tv className="w-3.5 h-3.5 text-white" />
+                          )}
+                        </div>
 
-                          {/* Duration */}
+                        <h3 className="text-white font-medium text-base sm:text-lg mb-1 line-clamp-1">
+                          {item.title}
+                        </h3>
+
+                        {item.mediaType === 'tv' && item.season && item.episode && episodeDetails && (
+                          <span className="text-white/80 text-xs sm:text-sm mb-1.5 line-clamp-1">
+                            {formatSeasonEpisode(item.season, item.episode)} • {episodeDetails.name}
+                          </span>
+                        )}
+
+                        <div className="flex items-center gap-2 mb-1.5 text-xs">
                           {item.progress && (
-                            <div className="absolute bottom-3 right-3">
-                              <span className="px-2.5 py-1 bg-light-text-primary/80 dark:bg-dark-text-primary/80 text-light-bg dark:text-dark-bg rounded-lg text-[10px] md:text-xs font-bold uppercase">
+                            <div className="flex items-center gap-2 text-white/80 w-full">
+                              <div className="px-1.5 py-0.5 bg-red-600 text-white text-[10px] rounded">
                                 {formatDuration(remaining)} left
-                              </span>
+                              </div>
+                              <div className="ml-auto text-[10px] text-white/60">
+                                {formatDuration(item.progress.duration)}
+                              </div>
                             </div>
                           )}
                         </div>
 
-                        {/* Info Section */}
-                        <div className="p-4">
-                          <h3 className="text-light-text-primary dark:text-dark-text-primary font-bold text-base md:text-lg line-clamp-1 mb-2">
-                            {item.title}
-                          </h3>
-
-                          {item.mediaType === 'tv' && item.season && item.episode && episodeDetails && (
-                            <p className="text-light-text-secondary dark:text-dark-text-secondary text-xs md:text-sm mb-3 line-clamp-1">
-                              <span className="font-semibold text-accent">
-                                {formatSeasonEpisode(item.season, item.episode)}
-                              </span>
-                              {' '} • {episodeDetails.name}
-                            </p>
-                          )}
-
-                          {/* Progress Bar */}
-                          {item.progress && (
-                            <div className="space-y-2">
-                              <div className="h-1.5 bg-light-text-secondary/20 dark:bg-dark-text-secondary/20 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  whileInView={{ width: `${progress}%` }}
-                                  transition={{ delay: 0.1, duration: 0.8 }}
-                                  className="h-full bg-accent rounded-full"
-                                />
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] md:text-xs text-light-text-secondary/60 dark:text-dark-text-secondary/60 font-medium">
-                                <span>{progress}%</span>
-                                <span>{formatDuration(item.progress.duration)}</span>
-                              </div>
-                            </div>
-                          )}
+                        {/* Progress bar */}
+                        <div>
+                          <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-red-600"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
+
+                      {/* Play button overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-600/90 flex items-center justify-center">
+                          <PlayCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
