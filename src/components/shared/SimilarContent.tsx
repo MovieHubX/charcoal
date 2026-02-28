@@ -37,11 +37,11 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
   useEffect(() => {
     const checkScroll = () => {
       if (!containerRef.current) return;
-      
+     
       setShowLeftArrow(containerRef.current.scrollLeft > 0);
       setShowRightArrow(
         containerRef.current.scrollLeft <
-          containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
+        containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
       );
     };
 
@@ -60,12 +60,12 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
 
   const scroll = (direction: 'left' | 'right') => {
     if (!containerRef.current) return;
-    
+   
     const scrollAmount = containerRef.current.clientWidth * 0.8;
     const newScrollLeft = direction === 'left'
       ? containerRef.current.scrollLeft - scrollAmount
       : containerRef.current.scrollLeft + scrollAmount;
-    
+   
     containerRef.current.scrollTo({
       left: newScrollLeft,
       behavior: 'smooth'
@@ -86,7 +86,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
   const onDrag = (e: React.MouseEvent) => {
     if (!isDragging || !containerRef.current) return;
     e.preventDefault();
-    
+   
     const x = e.pageX - (containerRef.current.offsetLeft || 0);
     const walk = (x - startX) * 2;
     containerRef.current.scrollLeft = scrollLeft - walk;
@@ -112,7 +112,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
 
   return (
     <div className="relative group/container">
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows with glassy style */}
       <AnimatePresence>
         {showLeftArrow && (
           <motion.button
@@ -140,7 +140,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
           </motion.button>
         )}
       </AnimatePresence>
-
+     
       {/* Scrollable Container */}
       <div
         ref={containerRef}
@@ -158,7 +158,6 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
           {items.map((item, index) => {
             const year = getYear(item);
             const itemTitle = getTitle(item);
-
             return (
               <motion.div
                 key={item.id}
@@ -170,7 +169,7 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
                   "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10"
                 )}
               >
-                {/* Poster Card with title overlay */}
+                {/* Poster Card */}
                 <Link
                   to={getMediaUrl(item)}
                   className="relative w-full aspect-[2/3] rounded-xl overflow-hidden flex-shrink-0 shadow-lg cursor-pointer"
@@ -179,43 +178,42 @@ const SimilarContent: React.FC<SimilarContentProps> = ({
                     <img
                       src={getImageUrl(item.poster_path, 'w342')}
                       alt={itemTitle}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/10">
                       <Flame className="w-12 h-12" />
                     </div>
                   )}
-
-                  {/* Gradient overlay at bottom for title readability */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Title - bottom left on poster */}
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <h3 className="font-bold text-sm leading-tight text-white drop-shadow-md line-clamp-2">
-                      {itemTitle}
-                    </h3>
-                  </div>
-
+                  {/* Overlay - darker on hover like episode selector */}
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors duration-300" />
                   {/* Year Badge - Top Left */}
                   {year && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <div className="px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 shadow-sm">
+                    <div className="absolute top-2 left-2">
+                      <div className="px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10">
                         {year}
                       </div>
                     </div>
                   )}
-
                   {/* Rating Badge - Top Right */}
                   {item.vote_average > 0 && (
-                    <div className="absolute top-2 right-2 z-10">
-                      <div className="flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md text-white rounded-lg border border-white/10 shadow-sm">
+                    <div className="absolute top-2 right-2">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg border border-white/10">
                         <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                         <span className="text-[10px] font-bold">{item.vote_average.toFixed(1)}</span>
                       </div>
                     </div>
                   )}
                 </Link>
+                {/* Info Area */}
+                <div className="px-2 pb-2 flex flex-col gap-1.5 min-h-0">
+                  <Link
+                    to={getMediaUrl(item)}
+                    className="font-bold text-sm leading-tight text-white line-clamp-2 hover:text-accent transition-colors"
+                  >
+                    {itemTitle}
+                  </Link>
+                </div>
               </motion.div>
             );
           })}
