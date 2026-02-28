@@ -179,18 +179,18 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
                   </div>
                 </div>
 
-                {/* Tags - from EpisodeSelector style */}
+                {/* Tags - glassy style */}
                 <div className="absolute bottom-2 left-2">
                   <div className={cn(
-                    "px-2 py-1 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10",
-                    video.type === 'Trailer' ? "bg-accent/80" : "bg-light-text-primary/60 dark:bg-dark-text-primary/60"
+                    "px-2 py-1 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider border",
+                    video.type === 'Trailer' ? "bg-accent/40 border-accent/60" : "bg-white/10 border-white/20"
                   )}>
                     {video.type}
                   </div>
                 </div>
 
                 <div className="absolute top-2 right-2">
-                  <div className="p-1.5 bg-light-text-primary/60 dark:bg-dark-text-primary/60 backdrop-blur-md text-white rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="p-1.5 bg-white/10 backdrop-blur-md text-white rounded-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ExternalLink className="w-3.5 h-3.5" />
                   </div>
                 </div>

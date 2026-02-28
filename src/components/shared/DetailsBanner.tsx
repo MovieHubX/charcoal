@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Tv, Star, Clock, Play, Bookmark, StepForward, ChevronDown, ChevronUp, Calendar, Layers } from 'lucide-react';
+import { Film, Tv, Star, Clock, Play, Bookmark, SkipForward, ChevronDown, ChevronUp, Calendar, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../../api/config';
 import { cn } from '../../lib/utils';
@@ -100,8 +100,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
           alt={title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-light-bg via-light-bg/80 to-transparent dark:from-dark-bg dark:via-dark-bg/80" />
-        <div className="absolute inset-0 bg-gradient-to-r from-light-bg via-light-bg/40 to-transparent dark:from-dark-bg dark:via-dark-bg/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/30 to-transparent" />
         <div className="absolute inset-0 backdrop-blur-[2px]" />
       </div>
 
@@ -117,7 +117,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
             <img
               src={getImageUrl(posterPath, 'w500')}
               alt={title}
-              className="relative w-full rounded-2xl border border-border-light dark:border-border-dark shadow-2xl"
+              className="relative w-full rounded-2xl border border-white/10 shadow-2xl"
             />
           </motion.div>
 
@@ -129,14 +129,14 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
               transition={{ delay: 0.1 }}
             >
               <div className="flex justify-center lg:justify-start items-center gap-3 mb-4">
-                <span className="px-3 py-1 bg-light-surface dark:bg-dark-surface backdrop-blur-md text-light-text-primary dark:text-dark-text-primary border border-border-light dark:border-border-dark rounded-full text-xs font-medium uppercase tracking-widest flex items-center gap-2">
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-md text-white border border-white/20 rounded-full text-xs font-medium uppercase tracking-widest flex items-center gap-2">
                   {type === 'movie' ? <Film className="w-3.5 h-3.5" /> : <Tv className="w-3.5 h-3.5" />}
                   {type === 'movie' ? 'Movie' : 'TV Series'}
                 </span>
               </div>
 
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-light-text-primary dark:text-dark-text-primary tracking-tight leading-none">
-                {title} <span className="text-light-text-secondary/40 dark:text-dark-text-secondary/40 font-light">{year}</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-white tracking-tight leading-none">
+                {title} <span className="text-white/40 font-light">{year}</span>
               </h1>
 
               {/* Stats Bar */}
@@ -146,8 +146,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                     <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">{rating.toFixed(1)}</div>
-                    <div className="text-[10px] text-light-text-secondary/40 dark:text-dark-text-secondary/40 uppercase font-bold tracking-tighter">Rating</div>
+                    <div className="text-lg font-bold text-white">{rating.toFixed(1)}</div>
+                    <div className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Rating</div>
                   </div>
                 </div>
 
@@ -158,8 +158,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                         <Clock className="w-5 h-5 text-blue-400" />
                       </div>
                       <div>
-                        <div className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">{formatDuration(runtime)}</div>
-                        <div className="text-[10px] text-light-text-secondary/40 dark:text-dark-text-secondary/40 uppercase font-bold tracking-tighter">Duration</div>
+                        <div className="text-lg font-bold text-white">{formatDuration(runtime)}</div>
+                        <div className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Duration</div>
                       </div>
                     </div>
                   )
@@ -170,8 +170,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                         <Layers className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <div className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">{numberOfSeasons} {numberOfSeasons === 1 ? 'Season' : 'Seasons'}</div>
-                        <div className="text-[10px] text-light-text-secondary/40 dark:text-dark-text-secondary/40 uppercase font-bold tracking-tighter">Content</div>
+                        <div className="text-lg font-bold text-white">{numberOfSeasons} {numberOfSeasons === 1 ? 'Season' : 'Seasons'}</div>
+                        <div className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Content</div>
                       </div>
                     </div>
                   )
@@ -182,8 +182,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                     <Calendar className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
-                    <div className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">{year}</div>
-                    <div className="text-[10px] text-light-text-secondary/40 dark:text-dark-text-secondary/40 uppercase font-bold tracking-tighter">Release</div>
+                    <div className="text-lg font-bold text-white">{year}</div>
+                    <div className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Release</div>
                   </div>
                 </div>
               </div>
@@ -193,7 +193,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                 {genres?.map((genre) => (
                   <span
                     key={genre.id}
-                    className="px-3 py-1.5 bg-light-surface dark:bg-dark-surface hover:bg-light-text-secondary/10 dark:hover:bg-dark-text-secondary/10 text-light-text-secondary dark:text-dark-text-secondary text-sm font-medium rounded-full border border-border-light dark:border-border-dark transition-colors cursor-default"
+                    className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-full border border-white/20 transition-colors cursor-default backdrop-blur-md"
                   >
                     {genre.name}
                   </span>
@@ -205,7 +205,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                 <motion.div
                   initial={false}
                   animate={{ height: isExpanded ? 'auto' : '4.5em' }}
-                  className="relative overflow-hidden text-sm md:text-base text-light-text-secondary dark:text-dark-text-secondary leading-relaxed text-left"
+                  className="relative overflow-hidden text-sm md:text-base text-white/70 leading-relaxed text-left"
                 >
                   <p ref={textRef}>
                     {overview}
@@ -216,7 +216,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-light-bg dark:from-dark-bg to-transparent"
+                        className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-black to-transparent"
                       />
                     )}
                   </AnimatePresence>
@@ -244,7 +244,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                   >
                     {resumeInfo && !resumeInfo.isCompleted ? (
                       <>
-                        <StepForward className="w-5 h-5 fill-current group-hover:translate-x-1 transition-transform" />
+                        <SkipForward className="w-5 h-5 fill-current group-hover:translate-x-1 transition-transform" />
                         <span className="font-bold text-lg uppercase tracking-wide">Resume</span>
                       </>
                     ) : (
@@ -261,7 +261,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                   >
                     {resumeInfo && !resumeInfo.isCompleted ? (
                       <>
-                        <StepForward className="w-5 h-5 fill-current group-hover:translate-x-1 transition-transform" />
+                        <SkipForward className="w-5 h-5 fill-current group-hover:translate-x-1 transition-transform" />
                         <span className="font-bold text-lg uppercase tracking-wide">Resume</span>
                       </>
                     ) : (
@@ -282,8 +282,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                     className={cn(
                       "w-full sm:w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-xl active:scale-95 border",
                       watchlistItem
-                        ? "bg-light-surface dark:bg-dark-surface border-accent/50 text-accent"
-                        : "bg-light-surface/50 dark:bg-dark-surface/50 border-border-light dark:border-border-dark text-light-text-primary dark:text-dark-text-primary hover:bg-light-surface dark:hover:bg-dark-surface"
+                        ? "bg-white/10 border-accent/50 text-accent"
+                        : "bg-white/5 border-white/10 text-white hover:bg-white/10"
                     )}
                   >
                     <Bookmark className={cn(
