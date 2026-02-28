@@ -201,7 +201,7 @@ const TVDetails = () => {
                   const isCompleted = historyItem?.isCompleted;
 
                   const isCurrentEpisode =
-                    Number(season) === selectedSeason && Number(episode.episode_number) === Number(episode.episode_number);
+                    Number(season) === selectedSeason && Number(episode.episode_number) === Number(episode);
 
                   return (
                     <button
@@ -302,8 +302,9 @@ const TVDetails = () => {
               </div>
             </div>
 
-            {/* Bottom controls section – matching VideoPlayer style */}
+            {/* Bottom controls section – like in VideoPlayer */}
             <div className="p-4 md:p-6 border-t border-white/10 bg-white/5 flex items-center justify-end gap-3">
+              {/* Resume button – styled like Next Episode from VideoPlayer */}
               {resumeInfo && !resumeInfo.isCompleted && (
                 <button
                   onClick={() => {
@@ -312,7 +313,7 @@ const TVDetails = () => {
                   }}
                   className="flex items-center justify-center gap-2 py-2.5 px-5 bg-accent hover:bg-accent/90 text-white rounded-xl shadow-lg shadow-accent/20 transition-all text-sm font-bold active:scale-95"
                 >
-                  <SkipForward className="w-4 h-4 fill-current" />
+                  <SkipForward className="w-4 h-4" />
                   Resume S{resumeInfo.season}:E{resumeInfo.episode}
                 </button>
               )}
