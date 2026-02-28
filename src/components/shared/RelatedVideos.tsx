@@ -31,8 +31,8 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
       
       setShowLeftArrow(containerRef.current.scrollLeft > 0);
       setShowRightArrow(
-        containerRef.current.scrollLeft < 
-        containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
+        containerRef.current.scrollLeft <
+          containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
       );
     };
 
@@ -53,8 +53,8 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
     if (!containerRef.current) return;
     
     const scrollAmount = containerRef.current.clientWidth * 0.8;
-    const newScrollLeft = direction === 'left' 
-      ? containerRef.current.scrollLeft - scrollAmount 
+    const newScrollLeft = direction === 'left'
+      ? containerRef.current.scrollLeft - scrollAmount
       : containerRef.current.scrollLeft + scrollAmount;
     
     containerRef.current.scrollTo({
@@ -98,7 +98,7 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
 
   return (
     <div className="relative group/container">
-      {/* Navigation Arrows with glassy style */}
+      {/* Navigation Arrows */}
       <AnimatePresence>
         {showLeftArrow && (
           <motion.button
@@ -106,7 +106,7 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => scroll('left')}
-            className="absolute left-4 top-1/2 z-20 -translate-y-1/2 w-12 h-12 bg-light-surface/80 dark:bg-dark-surface/80 backdrop-blur-md border border-border-light dark:border-border-dark text-light-text-primary dark:text-dark-text-primary rounded-full flex items-center justify-center transition-all hover:bg-accent/80 hover:border-accent hover:scale-110 shadow-2xl"
+            className="absolute left-4 top-1/2 z-20 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center transition-all hover:bg-accent/40 hover:border-accent/60 hover:scale-110 shadow-2xl"
           >
             <ChevronLeft className="w-6 h-6" />
           </motion.button>
@@ -120,13 +120,13 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => scroll('right')}
-            className="absolute right-4 top-1/2 z-20 -translate-y-1/2 w-12 h-12 bg-light-surface/80 dark:bg-dark-surface/80 backdrop-blur-md border border-border-light dark:border-border-dark text-light-text-primary dark:text-dark-text-primary rounded-full flex items-center justify-center transition-all hover:bg-accent/80 hover:border-accent hover:scale-110 shadow-2xl"
+            className="absolute right-4 top-1/2 z-20 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center transition-all hover:bg-accent/40 hover:border-accent/60 hover:scale-110 shadow-2xl"
           >
             <ChevronRight className="w-6 h-6" />
           </motion.button>
         )}
       </AnimatePresence>
-      
+
       {/* Scrollable Container */}
       <div
         ref={containerRef}
@@ -152,7 +152,8 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
               rel="noopener noreferrer"
               className={cn(
                 "group flex-shrink-0 w-[300px] flex flex-col gap-3 p-3 rounded-2xl transition-all text-left border relative overflow-hidden",
-                "bg-light-surface/30 dark:bg-dark-surface/30 border-border-light/30 dark:border-border-dark/30 hover:bg-light-surface/50 dark:hover:bg-dark-surface/50 hover:border-border-light/50 dark:hover:border-border-dark/50"
+                // Hover styles matching SimilarContent & episode cards
+                "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10"
               )}
               onClick={(e) => {
                 if (isDragging) {
@@ -161,28 +162,26 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
               }}
             >
               {/* Thumbnail Area */}
-              <div className="w-full aspect-video bg-light-surface dark:bg-dark-surface rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg">
+              <div className="w-full aspect-video bg-white/5 rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg">
                 <img
                   src={`https://img.youtube.com/vi/${video.key}/maxresdefault.jpg`}
                   alt={video.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   onError={(e) => {
-                    // Fallback to lower quality if maxres doesn't exist
                     (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.key}/mqdefault.jpg`;
                   }}
                 />
+                {/* Overlay - darkens more on hover */}
+                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors duration-300" />
 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
-
-                {/* Play Icon */}
+                {/* Play Icon - appears on hover */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20">
                     <Play className="w-8 h-8 text-white fill-current ml-1" />
                   </div>
                 </div>
 
-                {/* Tags - solid glassy style matching episode selector */}
+                {/* Type Tag */}
                 <div className="absolute bottom-2 left-2">
                   <div className={cn(
                     "px-2 py-1 backdrop-blur-md text-white rounded-lg text-[10px] font-bold uppercase tracking-wider",
@@ -192,6 +191,7 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
                   </div>
                 </div>
 
+                {/* External Link Indicator */}
                 <div className="absolute top-2 right-2">
                   <div className="p-1.5 bg-white/10 backdrop-blur-md text-white rounded-lg border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -201,10 +201,10 @@ const RelatedVideos: React.FC<RelatedVideosProps> = ({ videos }) => {
 
               {/* Info Area */}
               <div className="px-1 flex flex-col gap-1">
-                <h4 className="font-bold text-sm leading-tight text-light-text-primary dark:text-dark-text-primary line-clamp-2">
+                <h4 className="font-bold text-sm leading-tight text-white line-clamp-2">
                   {video.name}
                 </h4>
-                <div className="flex items-center justify-between text-[10px] text-light-text-secondary/40 dark:text-dark-text-secondary/40 font-bold uppercase tracking-widest mt-1">
+                <div className="flex items-center justify-between text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1">
                   <span>{video.site}</span>
                   {video.official && (
                     <span className="text-green-400">Official</span>
