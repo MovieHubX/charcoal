@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Film, Tv, Star, Clock, Play, Bookmark, SkipForward, ChevronDown, ChevronUp, Calendar, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Film, Tv, Star, Clock, Play, Bookmark, SkipForward, Calendar, Layers } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { getImageUrl } from '../../api/config';
 import { cn } from '../../lib/utils';
 import { WatchStatus, WatchHistoryItem } from '../../store/useStore';
@@ -51,26 +51,8 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
   onPlayClick,
   numberOfSeasons,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [needsExpansion, setNeedsExpansion] = useState(false);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
-  const textRef = useRef<HTMLParagraphElement>(null);
-
   const resumeInfo = getResumeInfo(type, Number(id), watchHistory);
-
-  useEffect(() => {
-    const checkTextHeight = () => {
-      if (textRef.current) {
-        const lineHeight = parseInt(window.getComputedStyle(textRef.current).lineHeight);
-        const threeLineHeight = lineHeight * 3;
-        setNeedsExpansion(textRef.current.scrollHeight > threeLineHeight + 4); // small buffer
-      }
-    };
-
-    checkTextHeight();
-    window.addEventListener('resize', checkTextHeight);
-    return () => window.removeEventListener('resize', checkTextHeight);
-  }, [overview]);
 
   const formatDuration = (minutes?: number) => {
     if (!minutes) return null;
@@ -197,7 +179,7 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
               </div>
 
               {/* Genres */}
-              <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-8">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2 mb-6">
                 {genres?.map((genre) => (
                   <span
                     key={genre.id}
@@ -208,44 +190,13 @@ const DetailsBanner: React.FC<DetailsBannerProps> = ({
                 ))}
               </div>
 
-              {/* Overview – no layout shift */}
-              <div className="relative mb-8 max-w-2xl mx-auto lg:mx-0">
-                <div
-                  className={cn(
-                    "text-sm md:text-base text-white/70 leading-relaxed text-left overflow-hidden transition-all duration-500",
-                    !isExpanded && "max-h-[4.8em]" // ≈3 lines + small buffer
-                  )}
+              {/* Overview – fixed height + ellipsis */}
+              <div className="mb-8 max-w-2xl mx-auto lg:mx-0">
+                <p
+                  className="text-sm md:text-base text-white/70 leading-relaxed text-left line-clamp-4"
                 >
-                  <p ref={textRef}>{overview}</p>
-
-                  <AnimatePresence>
-                    {!isExpanded && needsExpansion && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black to-transparent pointer-events-none"
-                      />
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {needsExpansion && (
-                  <button
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex items-center gap-1.5 text-accent hover:text-accent/80 text-sm font-bold uppercase tracking-widest mt-3 transition-colors group/read"
-                  >
-                    {isExpanded ? (
-                      <>
-                        Show Less <ChevronUp className="w-4 h-4 group-hover/read:-translate-y-0.5 transition-transform" />
-                      </>
-                    ) : (
-                      <>
-                        Read More <ChevronDown className="w-4 h-4 group-hover/read:translate-y-0.5 transition-transform" />
-                      </>
-                    )}
-                  </button>
-                )}
+                  {overview}
+                </p>
               </div>
 
               {/* Action Buttons */}
