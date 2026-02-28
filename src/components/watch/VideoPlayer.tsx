@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { VideoPlayer as CustomVideoPlayer } from '../../../imported-player/components/VideoPlayer';
-import { BackendApiResponse } from '../../../imported-player/types/api';
+import { VideoPlayer as CustomVideoPlayer } from './CustomVideoPlayer';
+import { BackendApiResponse } from '../../api/player-types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -59,6 +59,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           showTitle={showTitle}
           seasons={seasons}
           onEpisodeSelect={onEpisodeSelect}
+          onEpisodeNext={onEpisodeNext}
+          onEpisodePrevious={onEpisodePrevious}
           isFirstEpisode={isFirstEpisode}
           isLastEpisode={isLastEpisode}
           onBack={onBack}
