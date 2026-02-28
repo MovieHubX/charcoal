@@ -10,7 +10,7 @@ import { cn } from '../lib/utils';
 import VideoPlayer from '../components/watch/VideoPlayer';
 import BottomBar from '../components/watch/BottomBar';
 import { fetchMovieData, fetchTVData } from '../lib/jelly';
-import { BackendApiResponse } from '../../imported-player/types/api';
+import { BackendApiResponse } from '../api/player-types';
 
 const WatchPage: React.FC = () => {
   const { mediaType, id } = useParams();
