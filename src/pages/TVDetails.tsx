@@ -49,10 +49,10 @@ const TVDetails = () => {
     setIsEpisodeSelectorOpen(true);
   };
 
-  const youtubeVideos = details.videos?.results.filter(video => 
-    video.site === 'YouTube' && 
+  const youtubeVideos = (details.videos?.results.filter(video =>
+    video.site === 'YouTube' &&
     (video.type === 'Trailer' || video.type === 'Teaser' || video.type === 'Behind the Scenes')
-  ) || [];
+  ) || []).slice(0, 7);
 
   return (
     <motion.div 
@@ -88,13 +88,13 @@ const TVDetails = () => {
           viewport={{ once: true }}
           className="relative px-4 md:px-0"
         >
-          <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl">
-            <div className="px-8 py-6 border-b border-white/5 flex items-center gap-3">
+          <div className="bg-light-surface/30 dark:bg-dark-surface/30 backdrop-blur-xl border border-border-light/30 dark:border-border-dark/30 rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div className="px-4 md:px-8 py-6 border-b border-border-light/30 dark:border-border-dark/30 flex items-center gap-3">
               <div className="p-2 bg-accent/20 rounded-xl border border-accent/30">
                 <VideoIcon className="w-5 h-5 text-accent" />
               </div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Related Videos</h2>
-              <span className="text-white/20 ml-auto font-mono text-sm">{youtubeVideos.length} Items</span>
+              <h2 className="text-2xl font-black text-light-text-primary dark:text-dark-text-primary uppercase tracking-tighter">Related Videos</h2>
+              <span className="text-light-text-secondary/40 dark:text-dark-text-secondary/40 ml-auto font-mono text-sm">{youtubeVideos.length} Items</span>
             </div>
             <div className="p-4 md:p-8">
               <RelatedVideos videos={youtubeVideos} />

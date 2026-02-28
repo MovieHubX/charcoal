@@ -216,25 +216,25 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       {/* Modal */}
       <div
         className={cn(
-          "z-50 bg-black/90 shadow-2xl border border-white/10 flex flex-col transition-all duration-300 backdrop-blur-lg",
+          "z-50 bg-light-bg dark:bg-dark-bg shadow-2xl border border-border-light dark:border-border-dark flex flex-col transition-all duration-300 backdrop-blur-lg",
           getLayoutClasses(),
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full pointer-events-none"
         )}
         style={getModalStyle()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 border-b border-border-light dark:border-border-dark flex items-center justify-between">
           <div className="flex items-center gap-2">
             <List className="w-5 h-5 text-accent" />
-            <h2 className="text-lg font-bold text-white">Episodes</h2>
-            {!hideTitle && title && <span className="text-sm text-white/60">• {title}</span>}
+            <h2 className="text-lg font-bold text-light-text-primary dark:text-dark-text-primary">Episodes</h2>
+            {!hideTitle && title && <span className="text-sm text-light-text-secondary dark:text-dark-text-secondary">• {title}</span>}
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all active:scale-95"
+            className="p-2 bg-light-surface dark:bg-dark-surface hover:bg-light-text-secondary/10 dark:hover:bg-dark-text-secondary/10 rounded-lg border border-border-light dark:border-border-dark hover:border-border-light/50 dark:hover:border-border-dark/50 transition-all active:scale-95"
             title="Close"
           >
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4 text-light-text-primary dark:text-dark-text-primary" />
           </button>
         </div>
 
@@ -260,24 +260,24 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         )}
 
         {/* Season Selector */}
-        <div className="px-4 py-3 border-b border-white/10">
+        <div className="px-4 py-3 border-b border-border-light dark:border-border-dark">
           <div className="relative">
             <select
               value={selectedSeason}
               onChange={(e) => handleSeasonChange(Number(e.target.value))}
-              className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-accent/50 rounded-lg text-white appearance-none focus:outline-none focus:border-accent transition-all pr-10 font-medium backdrop-blur-sm"
+              className="w-full px-4 py-2.5 bg-light-surface dark:bg-dark-surface hover:bg-light-text-secondary/10 dark:hover:bg-dark-text-secondary/10 border border-border-light dark:border-border-dark hover:border-accent/50 rounded-lg text-light-text-primary dark:text-dark-text-primary appearance-none focus:outline-none focus:border-accent transition-all pr-10 font-medium backdrop-blur-sm"
             >
               {seasons.map((season) => (
                 <option
                   key={season.season_number}
                   value={season.season_number}
-                  className="bg-black text-white"
+                  className="bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary"
                 >
                   {season.name}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-white/60" />
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-light-text-secondary/60 dark:text-dark-text-secondary/60" />
           </div>
         </div>
 
@@ -309,7 +309,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                     )}
                   >
                     {/* Episode Thumbnail */}
-                    <div className="w-28 aspect-video bg-white/10 flex-shrink-0 rounded-md border border-white/10 overflow-hidden relative">
+                    <div className="w-28 aspect-video bg-light-surface dark:bg-dark-surface flex-shrink-0 rounded-md border border-border-light dark:border-border-dark overflow-hidden relative">
                       {episode.still_path ? (
                         <img
                           src={getImageUrl(episode.still_path, 'w300')}

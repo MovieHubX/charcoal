@@ -3,6 +3,7 @@ import { useMedia } from '../api/hooks/useMedia';
 import { useQuery } from '@tanstack/react-query';
 import { genreService } from '../api/services/genres';
 import { useStore } from '../store/useStore';
+import { motion } from 'framer-motion';
 import HeroSection from '../components/home/HeroSection';
 import YouMightLike from '../components/home/YouMightLike';
 import ContinueWatchingSection from '../components/home/ContinueWatchingSection';
@@ -32,29 +33,32 @@ const Home = () => {
   if (!trendingMonth || !featuredItems) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-light-text-secondary dark:text-dark-text-secondary">
-          Loading...
-        </div>
+        <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12 lg:space-y-16">
       {/* Hero Section */}
-      <div className="bg-white/20 dark:bg-white/5 backdrop-blur-md border-2 border-gray-400/50 dark:border-white/20 rounded-2xl overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <HeroSection items={featuredItems} />
-      </div>
+      </motion.div>
 
       {/* Continue Watching Section */}
       {watchHistory.length > 0 && (
-        <ContinueWatchingSection items={watchHistory.slice(0, 10)} />
+        <ContinueWatchingSection items={watchHistory.slice(0, 15)} />
       )}
 
       {/* You Might Like Section */}
-      <div className="bg-white/20 dark:bg-white/5 backdrop-blur-md border-2 border-gray-400/50 dark:border-white/20 rounded-2xl overflow-hidden">
-        <YouMightLike items={trendingMonth} />
-      </div>
+      <YouMightLike items={trendingMonth} />
+
+      {/* Decorative gradient footer */}
+      <div className="h-20 md:h-32 bg-gradient-to-t from-light-bg dark:from-dark-bg to-transparent pointer-events-none" />
     </div>
   );
 }
