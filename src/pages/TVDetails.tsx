@@ -15,15 +15,16 @@ const TVDetails = () => {
   const navigate = useNavigate();
   const { details, isLoading, contentRating, seasons } = useTVDetails(id);
   const { addToWatchlist, removeFromWatchlist, getWatchlistItem, watchHistory } = useStore();
+
   const [isEpisodeSelectorOpen, setIsEpisodeSelectorOpen] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(1);
 
   const season = searchParams.get('season') || '1';
   const episode = searchParams.get('episode') || '1';
-  const watchlistItem = getWatchlistItem(Number(id), 'tv');
 
-  // Get resume info from watch history
+  const watchlistItem = getWatchlistItem(Number(id), 'tv');
   const resumeInfo = watchHistory.find(h => h.id === Number(id) && h.mediaType === 'tv');
+
   const currentSeasonData = seasons?.find(s => s.season_number === selectedSeason);
 
   useEffect(() => {
@@ -62,7 +63,7 @@ const TVDetails = () => {
   ) || []).slice(0, 7);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="min-h-screen space-y-12 pb-20"
@@ -132,16 +133,21 @@ const TVDetails = () => {
         </motion.div>
       )}
 
-      {/* New Modern Landscape Episode Selector Modal */}
+      {/* Modern Episode Selector Modal – aligned with VideoPlayer style */}
       {isEpisodeSelectorOpen && seasons && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center animate-in fade-in zoom-in duration-300" onClick={() => setIsEpisodeSelectorOpen(false)}>
-          <div className="w-full max-w-6xl h-[90vh] md:h-[85vh] bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)]" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex items-center justify-center animate-in fade-in zoom-in duration-300"
+          onClick={() => setIsEpisodeSelectorOpen(false)}
+        >
+          <div
+            className="w-full max-w-6xl h-[90vh] md:h-[85vh] bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col md:flex-row md:items-center justify-between p-4 md:p-8 border-b border-white/10 bg-white/5 gap-4">
               <div className="flex items-center gap-4">
                 <List className="w-5 h-5 md:w-6 md:h-6 text-accent" />
                 <h2 className="text-white font-bold text-lg md:text-2xl tracking-tight">Episodes</h2>
               </div>
-
               <div className="flex items-center gap-3 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
                 <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
                   {seasons.map((season) => (
@@ -168,42 +174,34 @@ const TVDetails = () => {
               </div>
             </div>
 
-            {/* Resume Button */}
-            {resumeInfo && !resumeInfo.isCompleted && (
-              <button
-                onClick={() => {
-                  navigate(`/watch/tv/${id}?season=${resumeInfo.season}&episode=${resumeInfo.episode}`);
-                  setIsEpisodeSelectorOpen(false);
-                }}
-                className="mx-4 md:mx-8 mt-4 mb-2 px-4 py-3 bg-accent/20 hover:bg-accent/30 text-accent border border-accent/50 hover:border-accent rounded-lg flex items-center justify-center gap-2 transition-all relative font-medium backdrop-blur-sm"
-              >
-                <SkipForward className="w-5 h-5" />
-                Resume S{resumeInfo.season}:E{resumeInfo.episode}
-              </button>
-            )}
-
             <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
               <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 {currentSeasonData?.episodes.map((episode: any) => {
                   const airDate = episode.air_date ? new Date(episode.air_date) : null;
                   const isUpcoming = airDate ? airDate > new Date() : false;
-                  const formattedDate = airDate ? airDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: airDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
-                  }) : 'TBA';
+                  const formattedDate = airDate
+                    ? airDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: airDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+                      })
+                    : 'TBA';
 
-                  const historyItem = watchHistory.find(h =>
-                    h.id === Number(id) &&
-                    h.mediaType === 'tv' &&
-                    h.season === selectedSeason &&
-                    h.episode === episode.episode_number
+                  const historyItem = watchHistory.find(
+                    h =>
+                      h.id === Number(id) &&
+                      h.mediaType === 'tv' &&
+                      h.season === selectedSeason &&
+                      h.episode === episode.episode_number
                   );
 
                   const watchedProgress = historyItem?.progress
                     ? (historyItem.progress.watched / historyItem.progress.duration) * 100
                     : 0;
                   const isCompleted = historyItem?.isCompleted;
+
+                  const isCurrentEpisode =
+                    Number(season) === selectedSeason && Number(episode.episode_number) === Number(episode);
 
                   return (
                     <button
@@ -215,13 +213,13 @@ const TVDetails = () => {
                       }}
                       className={cn(
                         "group flex flex-col gap-3 p-3 rounded-2xl transition-all text-left border relative overflow-hidden",
-                        Number(episode) === Number(episode) && Number(season) === selectedSeason
+                        isCurrentEpisode
                           ? "bg-accent/10 border-accent/40 ring-1 ring-accent/20"
                           : "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10",
                         isUpcoming && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      <div className="w-full aspect-video bg-white/5 rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg group-hover:scale-[1.02] transition-transform">
+                      <div className="w-full aspect-video bg-white/5 rounded-xl overflow-hidden relative flex-shrink-0 shadow-lg transition-transform">
                         {episode.still_path ? (
                           <img
                             src={`https://image.tmdb.org/t/p/w500${episode.still_path}`}
@@ -264,13 +262,12 @@ const TVDetails = () => {
                           )}
                         </div>
 
-                        {Number(episode) === Number(episode) && Number(season) === selectedSeason && (
+                        {isCurrentEpisode && (
                           <div className="absolute top-2 left-2 px-2 py-1 bg-accent text-white rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-lg animate-pulse">
                             Watching
                           </div>
                         )}
 
-                        {/* Progress Bar */}
                         {watchedProgress > 0 && (
                           <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
                             <div
@@ -282,12 +279,12 @@ const TVDetails = () => {
                       </div>
 
                       <div className="flex-1 px-1">
-                        <h3 className={cn(
-                          "text-sm font-bold leading-tight line-clamp-1 mb-1",
-                          Number(episode) === Number(episode) && Number(season) === selectedSeason
-                            ? "text-accent"
-                            : "text-white"
-                        )}>
+                        <h3
+                          className={cn(
+                            "text-sm font-bold leading-tight line-clamp-1 mb-1",
+                            isCurrentEpisode ? "text-accent" : "text-white"
+                          )}
+                        >
                           {episode.episode_number}. {episode.name}
                         </h3>
                         <div className="flex items-center justify-between gap-2">
@@ -303,6 +300,23 @@ const TVDetails = () => {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Bottom controls section – like in VideoPlayer */}
+            <div className="p-4 md:p-6 border-t border-white/10 bg-white/5 flex items-center justify-end gap-3">
+              {/* Resume button – styled like Next Episode from VideoPlayer */}
+              {resumeInfo && !resumeInfo.isCompleted && (
+                <button
+                  onClick={() => {
+                    navigate(`/watch/tv/${id}?season=${resumeInfo.season}&episode=${resumeInfo.episode}`);
+                    setIsEpisodeSelectorOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-5 bg-accent hover:bg-accent/90 text-white rounded-xl shadow-lg shadow-accent/20 transition-all text-sm font-bold active:scale-95"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  Resume S{resumeInfo.season}:E{resumeInfo.episode}
+                </button>
+              )}
             </div>
           </div>
         </div>
