@@ -95,7 +95,7 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
   };
 
   const formatSeasonEpisode = (season: number, episode: number) => {
-    return `S${season} · E${episode}`;
+    return `S${season}`;
   };
 
   const formatTime = (minutes: number): string => {
@@ -211,13 +211,18 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
                   
                   {/* Top Badges (TV Info) */}
                   {item.mediaType === 'tv' && item.season && item.episode && (
-                    <div className="absolute top-3 left-3 max-w-[80%]">
+                    <div className="absolute top-3 left-3 max-w-[90%]">
                       <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white rounded-lg text-xs font-black uppercase tracking-wider border border-white/20 shadow-lg inline-flex items-center gap-2">
-                        <span>{formatSeasonEpisode(item.season, item.episode)}</span>
+                        <span className="whitespace-nowrap">{formatSeasonEpisode(item.season, item.episode)}</span>
+                        <span className="w-1.5 h-1.5 bg-white rounded-full flex-shrink-0"></span>
+                        <span className="whitespace-nowrap">E{item.episode}</span>
                         {episodeDetails?.name && (
-                          <span className="text-white/80 font-medium tracking-normal truncate max-w-[180px]">
-                            {episodeDetails.name}
-                          </span>
+                          <>
+                            <span className="w-1 h-1 bg-white/40 rounded-full flex-shrink-0"></span>
+                            <span className="text-white/80 font-medium tracking-normal truncate">
+                              {episodeDetails.name}
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
