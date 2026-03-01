@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Star, Flame, Sparkles, Film, Tv } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Play, Sparkles, Film, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Movie, TVShow } from '../../api/types';
 import { getImageUrl } from '../../api/config';
@@ -173,7 +173,7 @@ const YouMightLike: React.FC<YouMightLikeProps> = ({ items }) => {
                   <img
                     src={getImageUrl(item.poster_path, 'w500')}
                     alt={itemTitle}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500"
                   />
                   
                   {/* Overlay */}
@@ -200,7 +200,7 @@ const YouMightLike: React.FC<YouMightLikeProps> = ({ items }) => {
                   {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
                     <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20">
-                      <Flame className="w-8 h-8 text-white fill-current" />
+                      <Play className="w-8 h-8 text-white fill-current ml-1" />
                     </div>
                   </div>
                 </Link>

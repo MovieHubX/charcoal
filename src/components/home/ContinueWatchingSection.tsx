@@ -95,7 +95,7 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
   };
 
   const formatSeasonEpisode = (season: number, episode: number) => {
-    return `S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}`;
+    return `${season} · ${episode}`;
   };
 
   if (items.length === 0) return null;
@@ -200,6 +200,22 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
                   
+                  {/* Top Badges (TV Info) */}
+                  {item.mediaType === 'tv' && item.season && item.episode && (
+                    <div className="absolute top-3 left-3 flex flex-col gap-2 max-w-[80%]">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="px-2.5 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider border border-white/10 shadow-lg whitespace-nowrap">
+                          {formatSeasonEpisode(item.season, item.episode)}
+                        </span>
+                        {episodeDetails?.name && (
+                          <span className="text-[10px] text-white font-black uppercase tracking-widest truncate drop-shadow-lg">
+                            {episodeDetails.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Bottom Badges */}
                   <div className="absolute bottom-3 left-3">
                     {durationMinutes > 0 && (
@@ -244,7 +260,7 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
 
                 {/* Info Area */}
                 <div className="px-1 pb-1">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <div className="flex items-center justify-between gap-2">
                     <h3 className="font-bold text-base md:text-lg leading-tight text-white truncate">
                       {item.title}
                     </h3>
@@ -256,19 +272,6 @@ const ContinueWatchingSection: React.FC<ContinueWatchingSectionProps> = ({ items
                       )}
                     </div>
                   </div>
-
-                  {item.mediaType === 'tv' && item.season && item.episode && (
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="text-[10px] text-white/40 font-black uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-md border border-white/5 whitespace-nowrap">
-                        {formatSeasonEpisode(item.season, item.episode)}
-                      </span>
-                      {episodeDetails?.name && (
-                        <span className="text-[10px] text-white/40 font-black uppercase tracking-widest truncate">
-                          {episodeDetails.name}
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </div>
               </motion.div>
             );
