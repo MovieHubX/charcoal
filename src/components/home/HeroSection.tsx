@@ -28,32 +28,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
     queryFn: genreService.getAllGenres,
   });
 
-  const currentItem = items && items.length > 0 ? items[currentIndex] : null;
+  const currentItem = items[currentIndex];
   const isMovie = currentItem && 'title' in currentItem;
   const mediaType = isMovie ? 'movie' : 'tv';
 
   const { data: contentRating } = useMedia.useContentRating(
     mediaType,
-    currentItem?.id || 0
+    currentItem?.id
   );
 
   const { data: images } = useQuery({
     queryKey: ['images', currentItem?.id],
-    queryFn: () => currentItem ? mediaService.getImages(mediaType, currentItem.id) : null,
+    queryFn: () => mediaService.getImages(mediaType, currentItem.id),
     enabled: !!currentItem
   });
 
   useEffect(() => {
-    if (!items || items.length === 0) return;
     const interval = setInterval(() => {
       paginate(1);
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [currentIndex, items]);
+  }, [currentIndex]);
 
   const paginate = (newDirection: number) => {
-    if (!items || items.length === 0) return;
     setDirection(newDirection);
     setCurrentIndex((prev) => {
       if (newDirection === 1) {
@@ -63,7 +61,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
     });
   };
 
-  if (!items || items.length === 0 || !currentItem) return null;
+  if (!items.length) return null;
 
   const title = isMovie ? currentItem.title : currentItem.name;
   const releaseDate = isMovie ? currentItem.release_date : currentItem.first_air_date;
@@ -71,7 +69,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
   const watchlistItem = getWatchlistItem(currentItem.id, mediaType);
 
   const handleWatchlistAdd = (status: WatchStatus) => {
-    if (!currentItem) return;
     addToWatchlist({
       id: currentItem.id,
       mediaType,
@@ -84,7 +81,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
   };
 
   const handleWatchlistRemove = () => {
-    if (!currentItem) return;
     removeFromWatchlist(currentItem.id, mediaType);
     setIsWatchlistOpen(false);
   };
@@ -93,7 +89,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
     return genreIds.map(id => genres.find(g => g.id === id)?.name).filter(Boolean);
   };
 
-  const logo = images?.logos?.find((logo: any) =>
+  const logo = images?.logos?.find(logo =>
     logo.iso_639_1 === 'en' || !logo.iso_639_1
   );
 
@@ -148,11 +144,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
           </div>
 
           {/* Content Area */}
-          <div
-            className="relative z-10 h-full flex flex-col justify-end p-6 md:p-10 lg:p-14 cursor-pointer"
-            onClick={() => navigate(`/${mediaType}/${currentItem.id}`)}
-          >
-            <div className="max-w-3xl" onClick={(e) => e.stopPropagation()}>
+          <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-10 lg:p-14">
+            <div className="max-w-3xl">
               {/* Type tag redesigned */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -248,7 +241,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
                   className="px-8 py-3.5 bg-accent hover:bg-accent/90 text-white rounded-2xl flex items-center gap-3 transition-all shadow-xl shadow-accent/20 active:scale-95 group/play border border-white/20"
                 >
                   <Play className="w-5 h-5 fill-current ml-0.5 group-hover:scale-110 transition-transform" />
-                  <span className="font-bold text-base uppercase tracking-wider">Play</span>
+                  <span className="font-bold text-base uppercase tracking-wider">Play Now</span>
+                </Link>
+
+                <Link
+                  to={`/${mediaType}/${currentItem.id}`}
+                  className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center gap-3 transition-all backdrop-blur-md active:scale-95 border border-white/10"
+                >
+                  <Info className="w-5 h-5" />
+                  <span className="font-bold text-base uppercase tracking-wider">Details</span>
                 </Link>
 
                 <div className="relative">
