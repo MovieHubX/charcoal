@@ -39,13 +39,16 @@ export const useMedia = {
     useQuery({
       queryKey: ['trending', 'combined', timeWindow],
       queryFn: async () => {
-        const [movies, shows] = await Promise.all([
-          mediaService.getTrending('movie', timeWindow),
-          mediaService.getTrending('tv', timeWindow)
+        const [movies = [], shows = []] = await Promise.all([
+          mediaService.getTrending('movie', timeWindow).catch(() => []),
+          mediaService.getTrending('tv', timeWindow).catch(() => [])
         ]);
 
         // Ensure we have a healthy mix by taking up to 10 of each initially
-        const mixed = [...movies.slice(0, 10), ...shows.slice(0, 10)]
+        const movieSlice = Array.isArray(movies) ? movies.slice(0, 10) : [];
+        const showSlice = Array.isArray(shows) ? shows.slice(0, 10) : [];
+
+        const mixed = [...movieSlice, ...showSlice]
           .sort(() => Math.random() - 0.5);
 
         return mixed.slice(0, limit);
