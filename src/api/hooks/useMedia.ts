@@ -3,7 +3,7 @@ import { mediaService } from '../services/media';
 import { MediaType, TimeWindow } from '../types';
 
 export const useMedia = {
-  useTrending: (mediaType?: MediaType, timeWindow?: TimeWindow) => 
+  useTrending: (mediaType?: MediaType, timeWindow?: TimeWindow) =>
     useQuery({
       queryKey: ['trending', mediaType, timeWindow],
       queryFn: () => mediaService.getTrending(mediaType, timeWindow),
@@ -43,9 +43,12 @@ export const useMedia = {
           mediaService.getTrending('movie', timeWindow),
           mediaService.getTrending('tv', timeWindow)
         ]);
-        return [...movies, ...shows]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, limit);
+
+        // Ensure we have a healthy mix by taking up to 10 of each initially
+        const mixed = [...movies.slice(0, 10), ...shows.slice(0, 10)]
+          .sort(() => Math.random() - 0.5);
+
+        return mixed.slice(0, limit);
       },
       suspense: false,
       enabled: true,
