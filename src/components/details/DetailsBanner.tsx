@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { getImageUrl } from '../../api/config';
 import { cn } from '../../lib/utils';
 import { WatchStatus, WatchHistoryItem } from '../../store/useStore';
-import WatchlistMenu from './WatchlistMenu';
+import WatchlistMenu from '../shared/WatchlistMenu';
 import { getResumeInfo } from '../../lib/watch';
 
 interface DetailsBannerProps {
