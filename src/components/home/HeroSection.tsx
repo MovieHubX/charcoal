@@ -1,321 +1,244 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Play, Bookmark, ChevronLeft, ChevronRight, Star, Film, Tv, Info, Calendar } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Star, Flame, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Movie, TVShow } from '../../api/types';
 import { getImageUrl } from '../../api/config';
 import { cn } from '../../lib/utils';
-import WatchlistMenu from '../shared/WatchlistMenu';
-import { useStore, WatchStatus } from '../../store/useStore';
-import { useQuery } from '@tanstack/react-query';
-import { genreService } from '../../api/services/genres';
-import { mediaService } from '../../api/services/media';
-import { useMedia } from '../../api/hooks/useMedia';
 
-interface HeroSectionProps {
+interface YouMightLikeProps {
   items: (Movie | TVShow)[];
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ items }) => {
-  const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
-  const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
-  const { addToWatchlist, removeFromWatchlist, getWatchlistItem } = useStore();
-
-  const { data: genres = [] } = useQuery({
-    queryKey: ['genres'],
-    queryFn: genreService.getAllGenres,
-  });
-
-  const currentItem = items[currentIndex];
-  const isMovie = currentItem && 'title' in currentItem;
-  const mediaType = isMovie ? 'movie' : 'tv';
-
-  const { data: contentRating } = useMedia.useContentRating(
-    mediaType,
-    currentItem?.id
-  );
-
-  const { data: images } = useQuery({
-    queryKey: ['images', currentItem?.id],
-    queryFn: () => mediaService.getImages(mediaType, currentItem.id),
-    enabled: !!currentItem
-  });
+const YouMightLike: React.FC<YouMightLikeProps> = ({ items }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      paginate(1);
-    }, 8000);
+    const checkScroll = () => {
+      if (!containerRef.current) return;
+     
+      setShowLeftArrow(containerRef.current.scrollLeft > 0);
+      setShowRightArrow(
+        containerRef.current.scrollLeft <
+        containerRef.current.scrollWidth - containerRef.current.clientWidth - 10
+      );
+    };
 
-    return () => clearInterval(interval);
-  }, [currentIndex]);
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScroll, { passive: true });
+      checkScroll();
+    }
 
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    setCurrentIndex((prev) => {
-      if (newDirection === 1) {
-        return prev === items.length - 1 ? 0 : prev + 1;
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', checkScroll);
       }
-      return prev === 0 ? items.length - 1 : prev - 1;
+    };
+  }, [items]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!containerRef.current) return;
+   
+    const scrollAmount = containerRef.current.clientWidth * 0.8;
+    const newScrollLeft = direction === 'left'
+      ? containerRef.current.scrollLeft - scrollAmount
+      : containerRef.current.scrollLeft + scrollAmount;
+   
+    containerRef.current.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth'
     });
   };
 
-  if (!items.length) return null;
-
-  const title = isMovie ? currentItem.title : currentItem.name;
-  const releaseDate = isMovie ? currentItem.release_date : currentItem.first_air_date;
-  const year = releaseDate ? new Date(releaseDate).getFullYear() : null;
-  const watchlistItem = getWatchlistItem(currentItem.id, mediaType);
-
-  const handleWatchlistAdd = (status: WatchStatus) => {
-    addToWatchlist({
-      id: currentItem.id,
-      mediaType,
-      title,
-      posterPath: currentItem.poster_path,
-      addedAt: Date.now(),
-      status,
-    });
-    setIsWatchlistOpen(false);
+  const startDrag = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.pageX - (containerRef.current?.offsetLeft || 0));
+    setScrollLeft(containerRef.current?.scrollLeft || 0);
   };
 
-  const handleWatchlistRemove = () => {
-    removeFromWatchlist(currentItem.id, mediaType);
-    setIsWatchlistOpen(false);
+  const stopDrag = () => {
+    setIsDragging(false);
   };
 
-  const getGenreNames = (genreIds: number[]) => {
-    return genreIds.map(id => genres.find(g => g.id === id)?.name).filter(Boolean);
+  const onDrag = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    e.preventDefault();
+   
+    const x = e.pageX - (containerRef.current.offsetLeft || 0);
+    const walk = (x - startX) * 2;
+    containerRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  const logo = images?.logos?.find(logo =>
-    logo.iso_639_1 === 'en' || !logo.iso_639_1
-  );
+  if (!items || items.length === 0) {
+    return null;
+  }
 
-  const variants = {
-    enter: (direction: number) => ({
-      opacity: 0,
-      scale: 1.1,
-      filter: 'blur(10px)',
-    }),
-    center: {
-      zIndex: 1,
-      opacity: 1,
-      scale: 1,
-      filter: 'blur(0px)',
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      opacity: 0,
-      scale: 0.95,
-      filter: 'blur(10px)',
-    })
+  const getMediaUrl = (item: Movie | TVShow) => {
+    const type = 'title' in item ? 'movie' : 'tv';
+    return `/${type}/${item.id}`;
+  };
+
+  const getYear = (item: Movie | TVShow) => {
+    const dateStr = 'release_date' in item ? item.release_date : item.first_air_date;
+    return dateStr ? new Date(dateStr).getFullYear() : '';
+  };
+
+  const getTitle = (item: Movie | TVShow) => {
+    return 'title' in item ? item.title : item.name;
   };
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] rounded-[2rem] overflow-hidden group/hero shadow-2xl bg-black">
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={currentIndex}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            opacity: { duration: 0.6 },
-            scale: { duration: 0.8, ease: "easeOut" },
-            filter: { duration: 0.6 }
-          }}
-          className="absolute inset-0"
-        >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <img
-              src={getImageUrl(currentItem.backdrop_path, 'original')}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
-            {/* Gradients like DetailsBanner */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent" />
-            <div className="absolute inset-0 backdrop-blur-[1px]" />
+    <div className="relative group/container py-4">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-8 px-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-accent/10 rounded-xl border border-accent/20">
+            <Sparkles className="w-6 h-6 text-accent" />
           </div>
-
-          {/* Content Area */}
-          <div className="relative z-10 h-full flex flex-col justify-end p-6 md:p-10 lg:p-14">
-            <div className="max-w-3xl">
-              {/* Type tag redesigned */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3 mb-5"
-              >
-                <div className="relative inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-accent/90 to-accent/70 backdrop-blur-lg text-white rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg shadow-accent/30 border border-accent/40">
-                  {isMovie ? <Film className="w-3.5 h-3.5" /> : <Tv className="w-3.5 h-3.5" />}
-                  {isMovie ? 'Movie' : 'TV Series'}
-                  <div className="absolute -inset-1 bg-accent/20 rounded-full blur-md -z-10" />
-                </div>
-                {contentRating && (
-                  <span className="px-3 py-1.5 bg-white/10 backdrop-blur-md text-white/80 text-[10px] md:text-xs font-bold rounded-full border border-white/10 uppercase">
-                    {contentRating}
-                  </span>
-                )}
-              </motion.div>
-
-              {/* Logo or Title */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mb-6"
-              >
-                {logo ? (
-                  <img
-                    src={getImageUrl(logo.file_path, 'w500')}
-                    alt={title}
-                    className="h-16 md:h-24 lg:h-32 object-contain drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]"
-                  />
-                ) : (
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-none drop-shadow-2xl">
-                    {title}
-                  </h1>
-                )}
-              </motion.div>
-
-              {/* Stats & Genres */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex flex-wrap items-center gap-4 md:gap-6 mb-8"
-              >
-                <div className="flex items-center gap-2 group/stat">
-                  <div className="p-1.5 bg-yellow-400/10 rounded-lg border border-yellow-400/20 group-hover/stat:bg-yellow-400/20 transition-colors">
-                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  </div>
-                  <span className="text-white font-bold">{currentItem.vote_average.toFixed(1)}</span>
-                </div>
-
-                {year && (
-                  <div className="flex items-center gap-2 group/stat">
-                    <div className="p-1.5 bg-green-400/10 rounded-lg border border-green-400/20 group-hover/stat:bg-green-400/20 transition-colors">
-                      <Calendar className="w-4 h-4 text-green-400" />
-                    </div>
-                    <span className="text-white font-bold">{year}</span>
-                  </div>
-                )}
-
-                <div className="h-4 w-[1px] bg-white/20 hidden sm:block" />
-
-                <div className="flex flex-wrap gap-2">
-                  {getGenreNames(currentItem.genre_ids).slice(0, 3).map((genreName) => (
-                    <span key={genreName} className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white/70 text-xs font-medium rounded-full border border-white/10 transition-colors cursor-default backdrop-blur-md">
-                      {genreName}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Description (Overview) */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="text-white/60 text-sm md:text-base leading-relaxed mb-8 max-w-2xl line-clamp-2 md:line-clamp-3"
-              >
-                {currentItem.overview}
-              </motion.p>
-
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="flex items-center gap-4"
-              >
-                <Link
-                  to={`/watch/${mediaType}/${currentItem.id}`}
-                  className="px-8 py-3.5 bg-accent hover:bg-accent/90 text-white rounded-2xl flex items-center gap-3 transition-all shadow-xl shadow-accent/20 active:scale-95 group/play border border-white/20"
-                >
-                  <Play className="w-5 h-5 fill-current ml-0.5 group-hover:scale-110 transition-transform" />
-                  <span className="font-bold text-base uppercase tracking-wider">Play Now</span>
-                </Link>
-
-                <Link
-                  to={`/${mediaType}/${currentItem.id}`}
-                  className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center gap-3 transition-all backdrop-blur-md active:scale-95 border border-white/10"
-                >
-                  <Info className="w-5 h-5" />
-                  <span className="font-bold text-base uppercase tracking-wider">Details</span>
-                </Link>
-
-                <div className="relative">
-                  <button
-                    onClick={() => setIsWatchlistOpen(!isWatchlistOpen)}
-                    className={cn(
-                      "w-[54px] h-[54px] rounded-2xl flex items-center justify-center transition-all shadow-xl active:scale-95 border",
-                      watchlistItem
-                        ? "bg-white/10 border-accent/50 text-accent"
-                        : "bg-white/5 border-white/10 text-white hover:bg-white/10"
-                    )}
-                  >
-                    <Bookmark className={cn(
-                      "w-6 h-6 transition-transform",
-                      watchlistItem ? "fill-current" : ""
-                    )} />
-                  </button>
-
-                  <WatchlistMenu
-                    isOpen={isWatchlistOpen}
-                    onClose={() => setIsWatchlistOpen(false)}
-                    onAdd={handleWatchlistAdd}
-                    onRemove={handleWatchlistRemove}
-                    currentStatus={watchlistItem?.status}
-                    position="top-right"
-                  />
-                </div>
-              </motion.div>
-            </div>
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">You Might Like</h2>
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-0.5">Top picks for you today</p>
           </div>
-        </motion.div>
+        </div>
+      </div>
+
+      {/* Navigation Arrows with glassy style */}
+      <AnimatePresence>
+        {showLeftArrow && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => scroll('left')}
+            className="absolute left-4 top-[60%] z-20 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center transition-all hover:bg-accent/40 hover:border-accent/60 hover:scale-110 shadow-2xl"
+          >
+            <ChevronLeft className="w-7 h-7" />
+          </motion.button>
+        )}
       </AnimatePresence>
 
-      {/* Navigation Arrows - Glassy style */}
-      <button
-        onClick={() => paginate(-1)}
-        className="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-black/20 hover:bg-accent/40 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-90 opacity-0 group-hero:opacity-100 shadow-2xl"
+      <AnimatePresence>
+        {showRightArrow && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => scroll('right')}
+            className="absolute right-4 top-[60%] z-20 -translate-y-1/2 w-14 h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center transition-all hover:bg-accent/40 hover:border-accent/60 hover:scale-110 shadow-2xl"
+          >
+            <ChevronRight className="w-7 h-7" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+     
+      {/* Scrollable Container */}
+      <div
+        ref={containerRef}
+        className="overflow-x-auto scrollbar-none px-2 py-4"
+        onMouseDown={startDrag}
+        onMouseUp={stopDrag}
+        onMouseLeave={stopDrag}
+        onMouseMove={onDrag}
+        onTouchStart={(e) => startDrag(e as unknown as React.MouseEvent)}
+        onTouchEnd={stopDrag}
+        onTouchMove={(e) => onDrag(e as unknown as React.MouseEvent)}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'pan-y' }}
       >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
+        <div className="flex gap-6">
+          {items.map((item, index) => {
+            const year = getYear(item);
+            const itemTitle = getTitle(item);
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className={cn(
+                  "group flex-shrink-0 w-[200px] md:w-[240px] flex flex-col gap-4 rounded-3xl transition-all text-left border relative overflow-hidden p-3",
+                  "bg-white/[0.03] border-white/5 hover:bg-white/[0.08] hover:border-white/10"
+                )}
+              >
+                {/* Poster Card */}
+                <Link
+                  to={getMediaUrl(item)}
+                  className="relative w-full aspect-[2/3] rounded-2xl overflow-hidden flex-shrink-0 shadow-xl cursor-pointer"
+                >
+                  <img
+                    src={getImageUrl(item.poster_path, 'w500')}
+                    alt={itemTitle}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Badges */}
+                  <div className="absolute top-3 left-3 flex flex-col gap-2">
+                    {year && (
+                      <div className="px-2.5 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg text-[10px] font-black uppercase tracking-wider border border-white/10 shadow-lg">
+                        {year}
+                      </div>
+                    )}
+                  </div>
 
-      <button
-        onClick={() => paginate(1)}
-        className="absolute right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-black/20 hover:bg-accent/40 backdrop-blur-md border border-white/10 text-white rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-90 opacity-0 group-hero:opacity-100 shadow-2xl"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
+                  <div className="absolute top-3 right-3">
+                    {item.vote_average > 0 && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/50 backdrop-blur-md text-white rounded-lg border border-white/10 shadow-lg">
+                        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                        <span className="text-[11px] font-black tracking-tighter">{item.vote_average.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
 
-      {/* Indicators - Bottom Center */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2.5 px-4 py-2 bg-black/20 backdrop-blur-md rounded-full border border-white/5">
-        {items.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setDirection(index > currentIndex ? 1 : -1);
-              setCurrentIndex(index);
-            }}
-            className={cn(
-              "h-1.5 rounded-full transition-all duration-500",
-              index === currentIndex ? "bg-accent w-8" : "bg-white/20 w-1.5 hover:bg-white/40"
-            )}
-          />
-        ))}
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
+                    <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl border-2 border-white/20">
+                      <Flame className="w-8 h-8 text-white fill-current" />
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Info Area */}
+                <div className="px-1 pb-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link
+                      to={getMediaUrl(item)}
+                      className="font-bold text-base md:text-lg leading-tight text-white line-clamp-1 hover:text-accent transition-colors flex-1"
+                    >
+                      {itemTitle}
+                    </Link>
+                    <div className="flex-shrink-0">
+                      {'title' in item ? (
+                        <Film className="w-4 h-4 text-white/40" />
+                      ) : (
+                        <Tv className="w-4 h-4 text-white/40" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
+
+      <style>{`
+        .scrollbar-none {
+          scrollbar-width: none;
+        }
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default HeroSection;
+export default YouMightLike;
